@@ -1,0 +1,2416 @@
+[
+  {
+    "name": "api-gateway",
+    "owner": "team-platform@company.com",
+    "documentation": "",
+    "vision": "The unified ingress layer providing secure routing to all internal services.",
+    "repo": "https://github.com/company/api-gateway",
+    "domain": "platform",
+    "team": "employer 2",
+    "contracts": [
+      { "role": "edge-proxy", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "auth-service", "role": "authentication", "protocol": "oidc" }
+      ],
+      "non-critical": [
+        { "name": "service-catalog", "role": "metadata", "protocol": "http" }
+      ]
+    },
+    "events": {
+      "consuming": [
+        { "name": "ApprovalCreated", "description": "Emitted when an approval is created" }
+      ],
+      "producing": [
+        { "name": "ApprovedLearningUpdated", "description": "Emitted when an approved learning record is updated." }
+      ]
+    }
+  },
+  {
+    "name": "service-002",
+    "owner": "team-002@company.com",
+    "documentation": "",
+    "vision": "Example service 002 in the platform domain.",
+    "repo": "https://github.com/company/service-002",
+    "domain": "platform",
+    "team": "team 2",
+    "contracts": [
+      { "role": "api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "api-gateway", "role": "edge-proxy", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-003",
+    "owner": "team-003@company.com",
+    "documentation": "",
+    "vision": "Example service 003 in the learner domain.",
+    "repo": "https://github.com/company/service-003",
+    "domain": "learner",
+    "team": "team 3",
+    "contracts": [
+      { "role": "learner-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-002", "role": "api", "protocol": "http" }
+      ],
+      "non-critical": [
+        { "name": "api-gateway", "role": "edge-proxy", "protocol": "http" }
+      ]
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "LearnerUpdated", "description": "Emitted when learner data is updated." }
+      ]
+    }
+  },
+  {
+    "name": "service-004",
+    "owner": "team-004@company.com",
+    "documentation": "",
+    "vision": "Example service 004 providing reporting data.",
+    "repo": "https://github.com/company/service-004",
+    "domain": "reporting",
+    "team": "team 4",
+    "contracts": [
+      { "role": "reporting-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-003", "role": "learner-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "LearnerUpdated", "description": "Consumed for building learner reports." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-005",
+    "owner": "team-005@company.com",
+    "documentation": "",
+    "vision": "Example service 005 in the messaging domain.",
+    "repo": "https://github.com/company/service-005",
+    "domain": "messaging",
+    "team": "team 5",
+    "contracts": [
+      { "role": "notification-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-004", "role": "reporting-api", "protocol": "http" }
+      ],
+      "non-critical": [
+        { "name": "api-gateway", "role": "edge-proxy", "protocol": "http" }
+      ]
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "NotificationSent", "description": "Emitted when a notification is successfully sent." }
+      ]
+    }
+  },
+  {
+    "name": "service-006",
+    "owner": "team-006@company.com",
+    "documentation": "",
+    "vision": "Example service 006 managing audit logs.",
+    "repo": "https://github.com/company/service-006",
+    "domain": "platform",
+    "team": "team 6",
+    "contracts": [
+      { "role": "audit-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-005", "role": "notification-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "NotificationSent", "description": "Consumed to audit notification deliveries." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-007",
+    "owner": "team-007@company.com",
+    "documentation": "",
+    "vision": "Example service 007 for learner notifications preferences.",
+    "repo": "https://github.com/company/service-007",
+    "domain": "learner",
+    "team": "team 7",
+    "contracts": [
+      { "role": "preferences-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-006", "role": "audit-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "LearnerPreferencesUpdated", "description": "Emitted when learner notification preferences change." }
+      ]
+    }
+  },
+  {
+    "name": "service-008",
+    "owner": "team-008@company.com",
+    "documentation": "",
+    "vision": "Example service 008 for employer accounts.",
+    "repo": "https://github.com/company/service-008",
+    "domain": "employer",
+    "team": "team 8",
+    "contracts": [
+      { "role": "employer-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-007", "role": "preferences-api", "protocol": "http" }
+      ],
+      "non-critical": [
+        { "name": "api-gateway", "role": "edge-proxy", "protocol": "http" }
+      ]
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "EmployerCreated", "description": "Emitted when a new employer account is created." }
+      ]
+    }
+  },
+  {
+    "name": "service-009",
+    "owner": "team-009@company.com",
+    "documentation": "",
+    "vision": "Example service 009 for analytics aggregation.",
+    "repo": "https://github.com/company/service-009",
+    "domain": "reporting",
+    "team": "team 9",
+    "contracts": [
+      { "role": "analytics-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-008", "role": "employer-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "EmployerCreated", "description": "Consumed to enrich analytics datasets." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-010",
+    "owner": "team-010@company.com",
+    "documentation": "",
+    "vision": "Example service 010 managing scheduled jobs.",
+    "repo": "https://github.com/company/service-010",
+    "domain": "platform",
+    "team": "team 10",
+    "contracts": [
+      { "role": "scheduler-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-009", "role": "analytics-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "JobTriggered", "description": "Emitted when a scheduled job runs." }
+      ]
+    }
+  },
+  {
+    "name": "service-011",
+    "owner": "team-011@company.com",
+    "documentation": "",
+    "vision": "Example service 011 acting as a configuration service.",
+    "repo": "https://github.com/company/service-011",
+    "domain": "platform",
+    "team": "team 11",
+    "contracts": [
+      { "role": "config-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-010", "role": "scheduler-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "JobTriggered", "description": "Consumed to react to configuration refresh jobs." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-012",
+    "owner": "team-012@company.com",
+    "documentation": "",
+    "vision": "Example service 012 responsible for feature flags.",
+    "repo": "https://github.com/company/service-012",
+    "domain": "platform",
+    "team": "team 12",
+    "contracts": [
+      { "role": "feature-flags-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-011", "role": "config-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "FeatureFlagChanged", "description": "Emitted when a feature flag value is updated." }
+      ]
+    }
+  },
+  {
+    "name": "service-013",
+    "owner": "team-013@company.com",
+    "documentation": "",
+    "vision": "Example service 013 providing search capabilities.",
+    "repo": "https://github.com/company/service-013",
+    "domain": "shared",
+    "team": "team 13",
+    "contracts": [
+      { "role": "search-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-012", "role": "feature-flags-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "FeatureFlagChanged", "description": "Consumed to enable/disable search features." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-014",
+    "owner": "team-014@company.com",
+    "documentation": "",
+    "vision": "Example service 014 managing document storage.",
+    "repo": "https://github.com/company/service-014",
+    "domain": "shared",
+    "team": "team 14",
+    "contracts": [
+      { "role": "documents-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-013", "role": "search-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "DocumentStored", "description": "Emitted when a new document is stored." }
+      ]
+    }
+  },
+  {
+    "name": "service-015",
+    "owner": "team-015@company.com",
+    "documentation": "",
+    "vision": "Example service 015 handling document indexing.",
+    "repo": "https://github.com/company/service-015",
+    "domain": "shared",
+    "team": "team 15",
+    "contracts": [
+      { "role": "indexer-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-014", "role": "documents-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "DocumentStored", "description": "Consumed to trigger indexing." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-016",
+    "owner": "team-016@company.com",
+    "documentation": "",
+    "vision": "Example service 016 handling badge and achievement logic.",
+    "repo": "https://github.com/company/service-016",
+    "domain": "learner",
+    "team": "team 16",
+    "contracts": [
+      { "role": "achievements-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-015", "role": "indexer-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "AchievementUnlocked", "description": "Emitted when a learner earns an achievement." }
+      ]
+    }
+  },
+  {
+    "name": "service-017",
+    "owner": "team-017@company.com",
+    "documentation": "",
+    "vision": "Example service 017 for learner dashboards.",
+    "repo": "https://github.com/company/service-017",
+    "domain": "learner",
+    "team": "team 17",
+    "contracts": [
+      { "role": "dashboard-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-016", "role": "achievements-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "AchievementUnlocked", "description": "Consumed to update dashboards with new badges." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-018",
+    "owner": "team-018@company.com",
+    "documentation": "",
+    "vision": "Example service 018 offering export of learner data.",
+    "repo": "https://github.com/company/service-018",
+    "domain": "learner",
+    "team": "team 18",
+    "contracts": [
+      { "role": "exports-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-017", "role": "dashboard-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "ExportGenerated", "description": "Emitted when a learner export is generated." }
+      ]
+    }
+  },
+  {
+    "name": "service-019",
+    "owner": "team-019@company.com",
+    "documentation": "",
+    "vision": "Example service 019 managing CSV export delivery.",
+    "repo": "https://github.com/company/service-019",
+    "domain": "shared",
+    "team": "team 19",
+    "contracts": [
+      { "role": "delivery-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-018", "role": "exports-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "ExportGenerated", "description": "Consumed to deliver export links." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-020",
+    "owner": "team-020@company.com",
+    "documentation": "",
+    "vision": "Example service 020 handling notifications for export success.",
+    "repo": "https://github.com/company/service-020",
+    "domain": "messaging",
+    "team": "team 20",
+    "contracts": [
+      { "role": "export-notifications-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-019", "role": "delivery-api", "protocol": "http" }
+      ],
+      "non-critical": [
+        { "name": "api-gateway", "role": "edge-proxy", "protocol": "http" }
+      ]
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "ExportNotificationSent", "description": "Emitted when an export notification is sent." }
+      ]
+    }
+  },
+  {
+    "name": "service-021",
+    "owner": "team-021@company.com",
+    "documentation": "",
+    "vision": "Example service 021 managing tagging of learners.",
+    "repo": "https://github.com/company/service-021",
+    "domain": "learner",
+    "team": "team 21",
+    "contracts": [
+      { "role": "tags-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-020", "role": "export-notifications-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "ExportNotificationSent", "description": "Consumed to track export-related tags." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-022",
+    "owner": "team-022@company.com",
+    "documentation": "",
+    "vision": "Example service 022 for provider accounts.",
+    "repo": "https://github.com/company/service-022",
+    "domain": "provider",
+    "team": "team 22",
+    "contracts": [
+      { "role": "provider-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-021", "role": "tags-api", "protocol": "http" }
+      ],
+      "non-critical": [
+        { "name": "api-gateway", "role": "edge-proxy", "protocol": "http" }
+      ]
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "ProviderCreated", "description": "Emitted when a new provider is created." }
+      ]
+    }
+  },
+  {
+    "name": "service-023",
+    "owner": "team-023@company.com",
+    "documentation": "",
+    "vision": "Example service 023 providing provider analytics.",
+    "repo": "https://github.com/company/service-023",
+    "domain": "reporting",
+    "team": "team 23",
+    "contracts": [
+      { "role": "provider-analytics-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-022", "role": "provider-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "ProviderCreated", "description": "Consumed to populate provider analytics." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-024",
+    "owner": "team-024@company.com",
+    "documentation": "",
+    "vision": "Example service 024 managing API keys.",
+    "repo": "https://github.com/company/service-024",
+    "domain": "security",
+    "team": "team 24",
+    "contracts": [
+      { "role": "api-keys-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-023", "role": "provider-analytics-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "ApiKeyIssued", "description": "Emitted when an API key is issued." }
+      ]
+    }
+  },
+  {
+    "name": "service-025",
+    "owner": "team-025@company.com",
+    "documentation": "",
+    "vision": "Example service 025 handling API key usage metrics.",
+    "repo": "https://github.com/company/service-025",
+    "domain": "security",
+    "team": "team 25",
+    "contracts": [
+      { "role": "api-key-metrics-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-024", "role": "api-keys-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "ApiKeyIssued", "description": "Consumed to track key usage from issuance." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-026",
+    "owner": "team-026@company.com",
+    "documentation": "",
+    "vision": "Example service 026 for learner attendance tracking.",
+    "repo": "https://github.com/company/service-026",
+    "domain": "learner",
+    "team": "team 26",
+    "contracts": [
+      { "role": "attendance-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-025", "role": "api-key-metrics-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "AttendanceRecorded", "description": "Emitted when learner attendance is recorded." }
+      ]
+    }
+  },
+  {
+    "name": "service-027",
+    "owner": "team-027@company.com",
+    "documentation": "",
+    "vision": "Example service 027 providing attendance analytics.",
+    "repo": "https://github.com/company/service-027",
+    "domain": "reporting",
+    "team": "team 27",
+    "contracts": [
+      { "role": "attendance-analytics-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-026", "role": "attendance-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "AttendanceRecorded", "description": "Consumed for calculating attendance KPIs." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-028",
+    "owner": "team-028@company.com",
+    "documentation": "",
+    "vision": "Example service 028 managing learner goals.",
+    "repo": "https://github.com/company/service-028",
+    "domain": "learner",
+    "team": "team 28",
+    "contracts": [
+      { "role": "goals-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-027", "role": "attendance-analytics-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "GoalUpdated", "description": "Emitted when a learner goal is changed." }
+      ]
+    }
+  },
+  {
+    "name": "service-029",
+    "owner": "team-029@company.com",
+    "documentation": "",
+    "vision": "Example service 029 supporting goal recommendations.",
+    "repo": "https://github.com/company/service-029",
+    "domain": "learner",
+    "team": "team 29",
+    "contracts": [
+      { "role": "goal-recommendations-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-028", "role": "goals-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "GoalUpdated", "description": "Consumed to produce new recommendations." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-030",
+    "owner": "team-030@company.com",
+    "documentation": "",
+    "vision": "Example service 030 providing recommendation analytics.",
+    "repo": "https://github.com/company/service-030",
+    "domain": "reporting",
+    "team": "team 30",
+    "contracts": [
+      { "role": "recommendation-analytics-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-029", "role": "goal-recommendations-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "RecommendationServed", "description": "Emitted when a recommendation is presented to a user." }
+      ]
+    }
+  },
+  {
+    "name": "service-031",
+    "owner": "team-031@company.com",
+    "documentation": "",
+    "vision": "Example service 031 tracking recommendation click-throughs.",
+    "repo": "https://github.com/company/service-031",
+    "domain": "data",
+    "team": "team 31",
+    "contracts": [
+      { "role": "recommendation-events-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-030", "role": "recommendation-analytics-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "RecommendationServed", "description": "Consumed to track follow-up behaviour." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-032",
+    "owner": "team-032@company.com",
+    "documentation": "",
+    "vision": "Example service 032 managing finance accounts.",
+    "repo": "https://github.com/company/service-032",
+    "domain": "finance",
+    "team": "team 32",
+    "contracts": [
+      { "role": "accounts-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-031", "role": "recommendation-events-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "AccountBalanceUpdated", "description": "Emitted when a finance account balance changes." }
+      ]
+    }
+  },
+  {
+    "name": "service-033",
+    "owner": "team-033@company.com",
+    "documentation": "",
+    "vision": "Example service 033 tracking transactions.",
+    "repo": "https://github.com/company/service-033",
+    "domain": "finance",
+    "team": "team 33",
+    "contracts": [
+      { "role": "transactions-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-032", "role": "accounts-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "AccountBalanceUpdated", "description": "Consumed for ledger consistency checks." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-034",
+    "owner": "team-034@company.com",
+    "documentation": "",
+    "vision": "Example service 034 generating invoices.",
+    "repo": "https://github.com/company/service-034",
+    "domain": "finance",
+    "team": "team 34",
+    "contracts": [
+      { "role": "invoices-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-033", "role": "transactions-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "InvoiceCreated", "description": "Emitted when a new invoice is generated." }
+      ]
+    }
+  },
+  {
+    "name": "service-035",
+    "owner": "team-035@company.com",
+    "documentation": "",
+    "vision": "Example service 035 for invoice delivery.",
+    "repo": "https://github.com/company/service-035",
+    "domain": "messaging",
+    "team": "team 35",
+    "contracts": [
+      { "role": "invoice-delivery-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-034", "role": "invoices-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "InvoiceCreated", "description": "Consumed to send invoices via email." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-036",
+    "owner": "team-036@company.com",
+    "documentation": "",
+    "vision": "Example service 036 tracking invoice payments.",
+    "repo": "https://github.com/company/service-036",
+    "domain": "finance",
+    "team": "team 36",
+    "contracts": [
+      { "role": "invoice-payments-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-035", "role": "invoice-delivery-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "InvoicePaid", "description": "Emitted when an invoice is recorded as paid." }
+      ]
+    }
+  },
+  {
+    "name": "service-037",
+    "owner": "team-037@company.com",
+    "documentation": "",
+    "vision": "Example service 037 providing invoice reports.",
+    "repo": "https://github.com/company/service-037",
+    "domain": "reporting",
+    "team": "team 37",
+    "contracts": [
+      { "role": "invoice-reporting-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-036", "role": "invoice-payments-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "InvoicePaid", "description": "Consumed for revenue reporting." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-038",
+    "owner": "team-038@company.com",
+    "documentation": "",
+    "vision": "Example service 038 managing notifications for overdue invoices.",
+    "repo": "https://github.com/company/service-038",
+    "domain": "messaging",
+    "team": "team 38",
+    "contracts": [
+      { "role": "overdue-notifications-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-037", "role": "invoice-reporting-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "OverdueNoticeSent", "description": "Emitted when an overdue invoice notice is sent." }
+      ]
+    }
+  },
+  {
+    "name": "service-039",
+    "owner": "team-039@company.com",
+    "documentation": "",
+    "vision": "Example service 039 logging all finance notifications.",
+    "repo": "https://github.com/company/service-039",
+    "domain": "platform",
+    "team": "team 39",
+    "contracts": [
+      { "role": "finance-notifications-log-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-038", "role": "overdue-notifications-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "OverdueNoticeSent", "description": "Consumed to build an audit log of notices." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-040",
+    "owner": "team-040@company.com",
+    "documentation": "",
+    "vision": "Example service 040 managing user sessions.",
+    "repo": "https://github.com/company/service-040",
+    "domain": "security",
+    "team": "team 40",
+    "contracts": [
+      { "role": "sessions-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-039", "role": "finance-notifications-log-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "SessionCreated", "description": "Emitted when a new session is established." }
+      ]
+    }
+  },
+  {
+    "name": "service-041",
+    "owner": "team-041@company.com",
+    "documentation": "",
+    "vision": "Example service 041 tracking session activity.",
+    "repo": "https://github.com/company/service-041",
+    "domain": "security",
+    "team": "team 41",
+    "contracts": [
+      { "role": "session-activity-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-040", "role": "sessions-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "SessionCreated", "description": "Consumed to start activity tracking." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-042",
+    "owner": "team-042@company.com",
+    "documentation": "",
+    "vision": "Example service 042 providing session analytics.",
+    "repo": "https://github.com/company/service-042",
+    "domain": "reporting",
+    "team": "team 42",
+    "contracts": [
+      { "role": "session-analytics-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-041", "role": "session-activity-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "SessionAnalyticsUpdated", "description": "Emitted when session analytics data is refreshed." }
+      ]
+    }
+  },
+  {
+    "name": "service-043",
+    "owner": "team-043@company.com",
+    "documentation": "",
+    "vision": "Example service 043 managing user preferences.",
+    "repo": "https://github.com/company/service-043",
+    "domain": "user",
+    "team": "team 43",
+    "contracts": [
+      { "role": "user-preferences-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-042", "role": "session-analytics-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "UserPreferencesUpdated", "description": "Emitted when a user changes preferences." }
+      ]
+    }
+  },
+  {
+    "name": "service-044",
+    "owner": "team-044@company.com",
+    "documentation": "",
+    "vision": "Example service 044 managing user notifications preferences.",
+    "repo": "https://github.com/company/service-044",
+    "domain": "user",
+    "team": "team 44",
+    "contracts": [
+      { "role": "notification-preferences-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-043", "role": "user-preferences-api", "protocol": "http" }
+      ],
+      "non-critical": [
+        { "name": "api-gateway", "role": "edge-proxy", "protocol": "http" }
+      ]
+    },
+    "events": {
+      "consuming": [
+        { "name": "UserPreferencesUpdated", "description": "Consumed to update notification preferences." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-045",
+    "owner": "team-045@company.com",
+    "documentation": "",
+    "vision": "Example service 045 managing user devices.",
+    "repo": "https://github.com/company/service-045",
+    "domain": "user",
+    "team": "team 45",
+    "contracts": [
+      { "role": "devices-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-044", "role": "notification-preferences-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "DeviceRegistered", "description": "Emitted when a new device is registered." }
+      ]
+    }
+  },
+  {
+    "name": "service-046",
+    "owner": "team-046@company.com",
+    "documentation": "",
+    "vision": "Example service 046 providing push token management.",
+    "repo": "https://github.com/company/service-046",
+    "domain": "messaging",
+    "team": "team 46",
+    "contracts": [
+      { "role": "push-token-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-045", "role": "devices-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "DeviceRegistered", "description": "Consumed to link devices to push tokens." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-047",
+    "owner": "team-047@company.com",
+    "documentation": "",
+    "vision": "Example service 047 managing channel subscriptions.",
+    "repo": "https://github.com/company/service-047",
+    "domain": "messaging",
+    "team": "team 47",
+    "contracts": [
+      { "role": "subscriptions-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-046", "role": "push-token-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "SubscriptionChanged", "description": "Emitted when a channel subscription changes." }
+      ]
+    }
+  },
+  {
+    "name": "service-048",
+    "owner": "team-048@company.com",
+    "documentation": "",
+    "vision": "Example service 048 providing subscription analytics.",
+    "repo": "https://github.com/company/service-048",
+    "domain": "reporting",
+    "team": "team 48",
+    "contracts": [
+      { "role": "subscription-analytics-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-047", "role": "subscriptions-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "SubscriptionChanged", "description": "Consumed to update subscription analytics." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-049",
+    "owner": "team-049@company.com",
+    "documentation": "",
+    "vision": "Example service 049 providing system health reporting.",
+    "repo": "https://github.com/company/service-049",
+    "domain": "platform",
+    "team": "team 49",
+    "contracts": [
+      { "role": "health-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-048", "role": "subscription-analytics-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "HealthCheckFailed", "description": "Emitted when a health check fails." }
+      ]
+    }
+  },
+  {
+    "name": "service-050",
+    "owner": "team-050@company.com",
+    "documentation": "",
+    "vision": "Example service 050 aggregating health checks.",
+    "repo": "https://github.com/company/service-050",
+    "domain": "platform",
+    "team": "team 50",
+    "contracts": [
+      { "role": "health-aggregator-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-049", "role": "health-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "HealthCheckFailed", "description": "Consumed to update overall system health." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-051",
+    "owner": "team-051@company.com",
+    "documentation": "",
+    "vision": "Example service 051 managing alerts.",
+    "repo": "https://github.com/company/service-051",
+    "domain": "platform",
+    "team": "team 51",
+    "contracts": [
+      { "role": "alerts-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-050", "role": "health-aggregator-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "AlertRaised", "description": "Emitted when an alert is raised." }
+      ]
+    }
+  },
+  {
+    "name": "service-052",
+    "owner": "team-052@company.com",
+    "documentation": "",
+    "vision": "Example service 052 integrating alerts with ticketing.",
+    "repo": "https://github.com/company/service-052",
+    "domain": "platform",
+    "team": "team 52",
+    "contracts": [
+      { "role": "ticketing-integration-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-051", "role": "alerts-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "AlertRaised", "description": "Consumed to create tickets for critical alerts." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-053",
+    "owner": "team-053@company.com",
+    "documentation": "",
+    "vision": "Example service 053 managing ticket statuses.",
+    "repo": "https://github.com/company/service-053",
+    "domain": "platform",
+    "team": "team 53",
+    "contracts": [
+      { "role": "tickets-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-052", "role": "ticketing-integration-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "TicketUpdated", "description": "Emitted when a ticket status changes." }
+      ]
+    }
+  },
+  {
+    "name": "service-054",
+    "owner": "team-054@company.com",
+    "documentation": "",
+    "vision": "Example service 054 providing ticket reporting.",
+    "repo": "https://github.com/company/service-054",
+    "domain": "reporting",
+    "team": "team 54",
+    "contracts": [
+      { "role": "ticket-reporting-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-053", "role": "tickets-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "TicketUpdated", "description": "Consumed for ticket KPIs." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-055",
+    "owner": "team-055@company.com",
+    "documentation": "",
+    "vision": "Example service 055 managing content pages.",
+    "repo": "https://github.com/company/service-055",
+    "domain": "shared",
+    "team": "team 55",
+    "contracts": [
+      { "role": "content-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-054", "role": "ticket-reporting-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "ContentUpdated", "description": "Emitted when a content page is updated." }
+      ]
+    }
+  },
+  {
+    "name": "service-056",
+    "owner": "team-056@company.com",
+    "documentation": "",
+    "vision": "Example service 056 managing content publishing.",
+    "repo": "https://github.com/company/service-056",
+    "domain": "shared",
+    "team": "team 56",
+    "contracts": [
+      { "role": "publishing-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-055", "role": "content-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "ContentUpdated", "description": "Consumed to publish updated content." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-057",
+    "owner": "team-057@company.com",
+    "documentation": "",
+    "vision": "Example service 057 managing banners.",
+    "repo": "https://github.com/company/service-057",
+    "domain": "shared",
+    "team": "team 57",
+    "contracts": [
+      { "role": "banners-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-056", "role": "publishing-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "BannerUpdated", "description": "Emitted when a banner is changed." }
+      ]
+    }
+  },
+  {
+    "name": "service-058",
+    "owner": "team-058@company.com",
+    "documentation": "",
+    "vision": "Example service 058 handling banner targeting.",
+    "repo": "https://github.com/company/service-058",
+    "domain": "shared",
+    "team": "team 58",
+    "contracts": [
+      { "role": "banner-targeting-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-057", "role": "banners-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "BannerUpdated", "description": "Consumed for recalculating targeting rules." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-059",
+    "owner": "team-059@company.com",
+    "documentation": "",
+    "vision": "Example service 059 managing surveys.",
+    "repo": "https://github.com/company/service-059",
+    "domain": "shared",
+    "team": "team 59",
+    "contracts": [
+      { "role": "surveys-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-058", "role": "banner-targeting-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "SurveyCreated", "description": "Emitted when a new survey is created." }
+      ]
+    }
+  },
+  {
+    "name": "service-060",
+    "owner": "team-060@company.com",
+    "documentation": "",
+    "vision": "Example service 060 managing survey responses.",
+    "repo": "https://github.com/company/service-060",
+    "domain": "data",
+    "team": "team 60",
+    "contracts": [
+      { "role": "survey-responses-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-059", "role": "surveys-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "SurveyCreated", "description": "Consumed to initialize response collection." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-061",
+    "owner": "team-061@company.com",
+    "documentation": "",
+    "vision": "Example service 061 providing survey analytics.",
+    "repo": "https://github.com/company/service-061",
+    "domain": "reporting",
+    "team": "team 61",
+    "contracts": [
+      { "role": "survey-analytics-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-060", "role": "survey-responses-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "SurveyAnalyticsUpdated", "description": "Emitted when survey analytics are updated." }
+      ]
+    }
+  },
+  {
+    "name": "service-062",
+    "owner": "team-062@company.com",
+    "documentation": "",
+    "vision": "Example service 062 tracking user feedback.",
+    "repo": "https://github.com/company/service-062",
+    "domain": "user",
+    "team": "team 62",
+    "contracts": [
+      { "role": "feedback-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-061", "role": "survey-analytics-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "FeedbackSubmitted", "description": "Emitted when feedback is submitted." }
+      ]
+    }
+  },
+  {
+    "name": "service-063",
+    "owner": "team-063@company.com",
+    "documentation": "",
+    "vision": "Example service 063 routing feedback to teams.",
+    "repo": "https://github.com/company/service-063",
+    "domain": "platform",
+    "team": "team 63",
+    "contracts": [
+      { "role": "feedback-routing-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-062", "role": "feedback-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "FeedbackSubmitted", "description": "Consumed to route feedback to the right teams." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-064",
+    "owner": "team-064@company.com",
+    "documentation": "",
+    "vision": "Example service 064 managing notifications for feedback responses.",
+    "repo": "https://github.com/company/service-064",
+    "domain": "messaging",
+    "team": "team 64",
+    "contracts": [
+      { "role": "feedback-notifications-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-063", "role": "feedback-routing-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "FeedbackNotificationSent", "description": "Emitted when a feedback notification is sent." }
+      ]
+    }
+  },
+  {
+    "name": "service-065",
+    "owner": "team-065@company.com",
+    "documentation": "",
+    "vision": "Example service 065 tracking feedback notification metrics.",
+    "repo": "https://github.com/company/service-065",
+    "domain": "reporting",
+    "team": "team 65",
+    "contracts": [
+      { "role": "feedback-metrics-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-064", "role": "feedback-notifications-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "FeedbackNotificationSent", "description": "Consumed to update metrics." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-066",
+    "owner": "team-066@company.com",
+    "documentation": "",
+    "vision": "Example service 066 managing learner cohorts.",
+    "repo": "https://github.com/company/service-066",
+    "domain": "learner",
+    "team": "team 66",
+    "contracts": [
+      { "role": "cohorts-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-065", "role": "feedback-metrics-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "CohortUpdated", "description": "Emitted when cohort membership changes." }
+      ]
+    }
+  },
+  {
+    "name": "service-067",
+    "owner": "team-067@company.com",
+    "documentation": "",
+    "vision": "Example service 067 managing cohort communications.",
+    "repo": "https://github.com/company/service-067",
+    "domain": "messaging",
+    "team": "team 67",
+    "contracts": [
+      { "role": "cohort-messaging-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-066", "role": "cohorts-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "CohortUpdated", "description": "Consumed to adjust cohort messaging lists." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-068",
+    "owner": "team-068@company.com",
+    "documentation": "",
+    "vision": "Example service 068 providing cohort analytics.",
+    "repo": "https://github.com/company/service-068",
+    "domain": "reporting",
+    "team": "team 68",
+    "contracts": [
+      { "role": "cohort-analytics-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-067", "role": "cohort-messaging-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "CohortAnalyticsUpdated", "description": "Emitted when cohort analytics are refreshed." }
+      ]
+    }
+  },
+  {
+    "name": "service-069",
+    "owner": "team-069@company.com",
+    "documentation": "",
+    "vision": "Example service 069 managing provider cohorts.",
+    "repo": "https://github.com/company/service-069",
+    "domain": "provider",
+    "team": "team 69",
+    "contracts": [
+      { "role": "provider-cohorts-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-068", "role": "cohort-analytics-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "ProviderCohortUpdated", "description": "Emitted when provider cohort assignments change." }
+      ]
+    }
+  },
+  {
+    "name": "service-070",
+    "owner": "team-070@company.com",
+    "documentation": "",
+    "vision": "Example service 070 managing employer cohorts.",
+    "repo": "https://github.com/company/service-070",
+    "domain": "employer",
+    "team": "team 70",
+    "contracts": [
+      { "role": "employer-cohorts-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-069", "role": "provider-cohorts-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "ProviderCohortUpdated", "description": "Consumed to sync employer cohorts." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-071",
+    "owner": "team-071@company.com",
+    "documentation": "",
+    "vision": "Example service 071 managing SSO integration.",
+    "repo": "https://github.com/company/service-071",
+    "domain": "security",
+    "team": "team 71",
+    "contracts": [
+      { "role": "sso-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-070", "role": "employer-cohorts-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "SsoLogin", "description": "Emitted when an SSO login succeeds." }
+      ]
+    }
+  },
+  {
+    "name": "service-072",
+    "owner": "team-072@company.com",
+    "documentation": "",
+    "vision": "Example service 072 tracking SSO metrics.",
+    "repo": "https://github.com/company/service-072",
+    "domain": "security",
+    "team": "team 72",
+    "contracts": [
+      { "role": "sso-metrics-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-071", "role": "sso-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "SsoLogin", "description": "Consumed to build SSO metrics." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-073",
+    "owner": "team-073@company.com",
+    "documentation": "",
+    "vision": "Example service 073 providing user directory.",
+    "repo": "https://github.com/company/service-073",
+    "domain": "user",
+    "team": "team 73",
+    "contracts": [
+      { "role": "directory-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-072", "role": "sso-metrics-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "DirectoryUpdated", "description": "Emitted when directory entries change." }
+      ]
+    }
+  },
+  {
+    "name": "service-074",
+    "owner": "team-074@company.com",
+    "documentation": "",
+    "vision": "Example service 074 integrating with external HR systems.",
+    "repo": "https://github.com/company/service-074",
+    "domain": "user",
+    "team": "team 74",
+    "contracts": [
+      { "role": "hr-integration-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-073", "role": "directory-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "DirectoryUpdated", "description": "Consumed to keep HR data in sync." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-075",
+    "owner": "team-075@company.com",
+    "documentation": "",
+    "vision": "Example service 075 managing timetable data.",
+    "repo": "https://github.com/company/service-075",
+    "domain": "learner",
+    "team": "team 75",
+    "contracts": [
+      { "role": "timetable-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-074", "role": "hr-integration-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "TimetableUpdated", "description": "Emitted when a timetable changes." }
+      ]
+    }
+  },
+  {
+    "name": "service-076",
+    "owner": "team-076@company.com",
+    "documentation": "",
+    "vision": "Example service 076 handling timetable notifications.",
+    "repo": "https://github.com/company/service-076",
+    "domain": "messaging",
+    "team": "team 76",
+    "contracts": [
+      { "role": "timetable-notifications-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-075", "role": "timetable-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "TimetableUpdated", "description": "Consumed to send timetable changes to users." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-077",
+    "owner": "team-077@company.com",
+    "documentation": "",
+    "vision": "Example service 077 providing timetable analytics.",
+    "repo": "https://github.com/company/service-077",
+    "domain": "reporting",
+    "team": "team 77",
+    "contracts": [
+      { "role": "timetable-analytics-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-076", "role": "timetable-notifications-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "TimetableAnalyticsUpdated", "description": "Emitted when timetable analytics are refreshed." }
+      ]
+    }
+  },
+  {
+    "name": "service-078",
+    "owner": "team-078@company.com",
+    "documentation": "",
+    "vision": "Example service 078 managing learning content metadata.",
+    "repo": "https://github.com/company/service-078",
+    "domain": "learner",
+    "team": "team 78",
+    "contracts": [
+      { "role": "learning-content-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-077", "role": "timetable-analytics-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "LearningContentUpdated", "description": "Emitted when learning content metadata changes." }
+      ]
+    }
+  },
+  {
+    "name": "service-079",
+    "owner": "team-079@company.com",
+    "documentation": "",
+    "vision": "Example service 079 providing learning content search.",
+    "repo": "https://github.com/company/service-079",
+    "domain": "learner",
+    "team": "team 79",
+    "contracts": [
+      { "role": "learning-search-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-078", "role": "learning-content-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "LearningContentUpdated", "description": "Consumed to update search indexes." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-080",
+    "owner": "team-080@company.com",
+    "documentation": "",
+    "vision": "Example service 080 for learning recommendations.",
+    "repo": "https://github.com/company/service-080",
+    "domain": "learner",
+    "team": "team 80",
+    "contracts": [
+      { "role": "learning-recommendations-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-079", "role": "learning-search-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "LearningRecommendationIssued", "description": "Emitted when a learning recommendation is made." }
+      ]
+    }
+  },
+  {
+    "name": "service-081",
+    "owner": "team-081@company.com",
+    "documentation": "",
+    "vision": "Example service 081 tracking recommendation outcomes.",
+    "repo": "https://github.com/company/service-081",
+    "domain": "data",
+    "team": "team 81",
+    "contracts": [
+      { "role": "learning-outcomes-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-080", "role": "learning-recommendations-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "LearningRecommendationIssued", "description": "Consumed to track recommendation success." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-082",
+    "owner": "team-082@company.com",
+    "documentation": "",
+    "vision": "Example service 082 providing outcomes analytics.",
+    "repo": "https://github.com/company/service-082",
+    "domain": "reporting",
+    "team": "team 82",
+    "contracts": [
+      { "role": "outcomes-analytics-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-081", "role": "learning-outcomes-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "OutcomesAnalyticsUpdated", "description": "Emitted when outcomes analytics are updated." }
+      ]
+    }
+  },
+  {
+    "name": "service-083",
+    "owner": "team-083@company.com",
+    "documentation": "",
+    "vision": "Example service 083 managing provider performance data.",
+    "repo": "https://github.com/company/service-083",
+    "domain": "provider",
+    "team": "team 83",
+    "contracts": [
+      { "role": "provider-performance-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-082", "role": "outcomes-analytics-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "ProviderPerformanceUpdated", "description": "Emitted when provider performance metrics change." }
+      ]
+    }
+  },
+  {
+    "name": "service-084",
+    "owner": "team-084@company.com",
+    "documentation": "",
+    "vision": "Example service 084 managing employer performance data.",
+    "repo": "https://github.com/company/service-084",
+    "domain": "employer",
+    "team": "team 84",
+    "contracts": [
+      { "role": "employer-performance-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-083", "role": "provider-performance-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "ProviderPerformanceUpdated", "description": "Consumed to enrich employer performance data." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-085",
+    "owner": "team-085@company.com",
+    "documentation": "",
+    "vision": "Example service 085 providing system-wide performance dashboards.",
+    "repo": "https://github.com/company/service-085",
+    "domain": "reporting",
+    "team": "team 85",
+    "contracts": [
+      { "role": "performance-dashboards-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-084", "role": "employer-performance-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "PerformanceDashboardsUpdated", "description": "Emitted when dashboards are refreshed." }
+      ]
+    }
+  },
+  {
+    "name": "service-086",
+    "owner": "team-086@company.com",
+    "documentation": "",
+    "vision": "Example service 086 managing audit exports.",
+    "repo": "https://github.com/company/service-086",
+    "domain": "platform",
+    "team": "team 86",
+    "contracts": [
+      { "role": "audit-exports-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-085", "role": "performance-dashboards-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "AuditExportCreated", "description": "Emitted when an audit export is generated." }
+      ]
+    }
+  },
+  {
+    "name": "service-087",
+    "owner": "team-087@company.com",
+    "documentation": "",
+    "vision": "Example service 087 delivering audit exports.",
+    "repo": "https://github.com/company/service-087",
+    "domain": "messaging",
+    "team": "team 87",
+    "contracts": [
+      { "role": "audit-export-delivery-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-086", "role": "audit-exports-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "AuditExportCreated", "description": "Consumed to deliver the export." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-088",
+    "owner": "team-088@company.com",
+    "documentation": "",
+    "vision": "Example service 088 logging audit export deliveries.",
+    "repo": "https://github.com/company/service-088",
+    "domain": "platform",
+    "team": "team 88",
+    "contracts": [
+      { "role": "audit-delivery-log-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-087", "role": "audit-export-delivery-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "AuditDeliveryLogged", "description": "Emitted when an audit delivery is logged." }
+      ]
+    }
+  },
+  {
+    "name": "service-089",
+    "owner": "team-089@company.com",
+    "documentation": "",
+    "vision": "Example service 089 providing admin UI configuration.",
+    "repo": "https://github.com/company/service-089",
+    "domain": "platform",
+    "team": "team 89",
+    "contracts": [
+      { "role": "admin-config-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-088", "role": "audit-delivery-log-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "AuditDeliveryLogged", "description": "Consumed to show delivery metrics in admin." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-090",
+    "owner": "team-090@company.com",
+    "documentation": "",
+    "vision": "Example service 090 managing admin roles.",
+    "repo": "https://github.com/company/service-090",
+    "domain": "security",
+    "team": "team 90",
+    "contracts": [
+      { "role": "admin-roles-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-089", "role": "admin-config-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "AdminRoleUpdated", "description": "Emitted when admin role configuration changes." }
+      ]
+    }
+  },
+  {
+    "name": "service-091",
+    "owner": "team-091@company.com",
+    "documentation": "",
+    "vision": "Example service 091 managing admin sessions.",
+    "repo": "https://github.com/company/service-091",
+    "domain": "security",
+    "team": "team 91",
+    "contracts": [
+      { "role": "admin-sessions-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-090", "role": "admin-roles-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "AdminRoleUpdated", "description": "Consumed to adjust session privileges." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-092",
+    "owner": "team-092@company.com",
+    "documentation": "",
+    "vision": "Example service 092 providing admin dashboards.",
+    "repo": "https://github.com/company/service-092",
+    "domain": "reporting",
+    "team": "team 92",
+    "contracts": [
+      { "role": "admin-dashboards-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-091", "role": "admin-sessions-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "AdminDashboardsUpdated", "description": "Emitted when admin dashboards data is refreshed." }
+      ]
+    }
+  },
+  {
+    "name": "service-093",
+    "owner": "team-093@company.com",
+    "documentation": "",
+    "vision": "Example service 093 handling admin notifications.",
+    "repo": "https://github.com/company/service-093",
+    "domain": "messaging",
+    "team": "team 93",
+    "contracts": [
+      { "role": "admin-notifications-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-092", "role": "admin-dashboards-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "AdminNotificationSent", "description": "Emitted when an admin notification is sent." }
+      ]
+    }
+  },
+  {
+    "name": "service-094",
+    "owner": "team-094@company.com",
+    "documentation": "",
+    "vision": "Example service 094 logging admin notifications.",
+    "repo": "https://github.com/company/service-094",
+    "domain": "platform",
+    "team": "team 94",
+    "contracts": [
+      { "role": "admin-notifications-log-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-093", "role": "admin-notifications-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "AdminNotificationSent", "description": "Consumed to log admin notifications." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-095",
+    "owner": "team-095@company.com",
+    "documentation": "",
+    "vision": "Example service 095 managing system-wide settings.",
+    "repo": "https://github.com/company/service-095",
+    "domain": "platform",
+    "team": "team 95",
+    "contracts": [
+      { "role": "system-settings-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-094", "role": "admin-notifications-log-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "SystemSettingsUpdated", "description": "Emitted when system settings are updated." }
+      ]
+    }
+  },
+  {
+    "name": "service-096",
+    "owner": "team-096@company.com",
+    "documentation": "",
+    "vision": "Example service 096 providing system settings history.",
+    "repo": "https://github.com/company/service-096",
+    "domain": "data",
+    "team": "team 96",
+    "contracts": [
+      { "role": "system-settings-history-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-095", "role": "system-settings-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "SystemSettingsUpdated", "description": "Consumed to record configuration changes." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-097",
+    "owner": "team-097@company.com",
+    "documentation": "",
+    "vision": "Example service 097 exposing system status.",
+    "repo": "https://github.com/company/service-097",
+    "domain": "platform",
+    "team": "team 97",
+    "contracts": [
+      { "role": "system-status-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-096", "role": "system-settings-history-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "SystemStatusUpdated", "description": "Emitted when overall system status changes." }
+      ]
+    }
+  },
+  {
+    "name": "service-098",
+    "owner": "team-098@company.com",
+    "documentation": "",
+    "vision": "Example service 098 integrating system status with external monitoring.",
+    "repo": "https://github.com/company/service-098",
+    "domain": "platform",
+    "team": "team 98",
+    "contracts": [
+      { "role": "external-monitoring-integration-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-097", "role": "system-status-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "SystemStatusUpdated", "description": "Consumed to push updates to external tools." }
+      ],
+      "producing": []
+    }
+  },
+  {
+    "name": "service-099",
+    "owner": "team-099@company.com",
+    "documentation": "",
+    "vision": "Example service 099 providing API usage statistics.",
+    "repo": "https://github.com/company/service-099",
+    "domain": "data",
+    "team": "team 99",
+    "contracts": [
+      { "role": "api-usage-stats-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-098", "role": "external-monitoring-integration-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [],
+      "producing": [
+        { "name": "ApiUsageStatsUpdated", "description": "Emitted when API usage stats are recalculated." }
+      ]
+    }
+  },
+  {
+    "name": "service-100",
+    "owner": "team-100@company.com",
+    "documentation": "",
+    "vision": "Example service 100 providing API usage dashboards.",
+    "repo": "https://github.com/company/service-100",
+    "domain": "reporting",
+    "team": "team 100",
+    "contracts": [
+      { "role": "api-usage-dashboards-api", "protocol": "http" }
+    ],
+    "dependencies": {
+      "critical": [
+        { "name": "service-099", "role": "api-usage-stats-api", "protocol": "http" }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "consuming": [
+        { "name": "ApiUsageStatsUpdated", "description": "Consumed to refresh API usage dashboards." }
+      ],
+      "producing": []
+    }
+  }
+]
