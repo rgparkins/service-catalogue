@@ -1,9 +1,8 @@
-// ServiceGraph.jsx
 import React, { useMemo, useState, useEffect } from 'react';
-import CytoscapeComponent from 'react-cytoscapejs';
+import CytoscapeView from './CytoscapeView.jsx';
 import services from './service-metadata.json';
 
-// Build Cytoscape elements and filter metadata from your JSON
+// Build Cytoscape elements and metadata from your JSON
 function buildElements(services) {
   const nodesById = new Map();
   const edges = [];
@@ -30,13 +29,11 @@ function buildElements(services) {
 
     const nodeData = nodesById.get(id).data;
 
-    // Dependencies (critical + non-critical)
-    const deps = [
-      ...(svc.dependencies?.critical || []),
-      ...(svc.dependencies?.['non-critical'] || []),
-    ];
+    // Dependencies with critical flag
+    const criticalDeps = svc.dependencies?.critical || [];
+    const nonCriticalDeps = svc.dependencies?.["non-critical"] || [];
 
-    deps.forEach((dep) => {
+    criticalDeps.forEach((dep) => {
       if (!dep.name) return;
 
       if (!nodesById.has(dep.name)) {
@@ -54,10 +51,40 @@ function buildElements(services) {
 
       edges.push({
         data: {
-          id: `dep-${id}-${dep.name}`,
+          id: `dep-${id}-${dep.name}-critical`,
           source: id,
           target: dep.name,
           kind: 'dependency',
+          critical: 'true',
+        },
+      });
+
+      inbound.set(dep.name, (inbound.get(dep.name) || 0) + 1);
+    });
+
+    nonCriticalDeps.forEach((dep) => {
+      if (!dep.name) return;
+
+      if (!nodesById.has(dep.name)) {
+        nodesById.set(dep.name, {
+          data: {
+            id: dep.name,
+            label: dep.name,
+            type: dep.role || 'external',
+            weight: 0,
+            producedEvents: [],
+            consumedEvents: [],
+          },
+        });
+      }
+
+      edges.push({
+        data: {
+          id: `dep-${id}-${dep.name}-noncritical`,
+          source: id,
+          target: dep.name,
+          kind: 'dependency',
+          critical: 'false',
         },
       });
 
@@ -72,9 +99,7 @@ function buildElements(services) {
     producing.forEach((e) => {
       const name = e.name;
       if (!name) return;
-
       nodeData.producedEvents.push(name);
-
       if (!producers.has(name)) producers.set(name, new Set());
       producers.get(name).add(id);
     });
@@ -82,15 +107,13 @@ function buildElements(services) {
     consuming.forEach((e) => {
       const name = e.name;
       if (!name) return;
-
       nodeData.consumedEvents.push(name);
-
       if (!consumers.has(name)) consumers.set(name, new Set());
       consumers.get(name).add(id);
     });
   });
 
-  // Event edges (producer -> consumer), dotted orange
+  // Event edges (producer -> consumer)
   const allEventNames = new Set([
     ...producers.keys(),
     ...consumers.keys(),
@@ -140,14 +163,17 @@ export default function ServiceGraph() {
     []
   );
 
-  // Dropdown filters
+  // Filters
   const [selectedEvent, setSelectedEvent] = useState(ALL_EVENTS);
   const [selectedServiceFilter, setSelectedServiceFilter] =
     useState(ALL_SERVICES);
 
-  // Node clicked for details panel
+  // Node clicked
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [cyInstance, setCyInstance] = useState(null);
+
+  // Node positions to keep layout stable
+  const [positions, setPositions] = useState({});
 
   // Map id -> full service metadata
   const serviceById = useMemo(() => {
@@ -168,7 +194,7 @@ export default function ServiceGraph() {
     [elements]
   );
 
-  // Attach click handler to Cytoscape instance
+  // Click handler
   useEffect(() => {
     if (!cyInstance) return;
 
@@ -184,11 +210,73 @@ export default function ServiceGraph() {
     };
   }, [cyInstance]);
 
-  // Filtered elements based on dropdowns
+  // Initial layout + dragfree position tracking
+  useEffect(() => {
+    if (!cyInstance) return;
+
+    const cy = cyInstance;
+
+    const initialLayout = {
+      name: 'concentric',
+      padding: 50,
+      minNodeSpacing: 60,
+      concentric: (node) => node.data('weight') || 0,
+      levelWidth: () => (maxWeight || 1) / 4,
+    };
+
+    // Run initial layout once
+    cy.layout(initialLayout).run();
+
+    // Capture initial positions
+    const initialPos = {};
+    cy.nodes().forEach((n) => {
+      initialPos[n.id()] = {
+        x: n.position('x'),
+        y: n.position('y'),
+      };
+    });
+    setPositions(initialPos);
+
+    // Track dragfree events
+    const dragHandler = (evt) => {
+      const n = evt.target;
+      setPositions((prev) => ({
+        ...prev,
+        [n.id()]: { x: n.position('x'), y: n.position('y') },
+      }));
+    };
+
+    cy.on('dragfree', 'node', dragHandler);
+
+    return () => {
+      cy.removeListener('dragfree', 'node', dragHandler);
+    };
+  }, [cyInstance, maxWeight]);
+
+  // Highlight / fade neighbourhood on selection
+  useEffect(() => {
+    if (!cyInstance) return;
+
+    const cy = cyInstance;
+    cy.elements().removeClass('faded highlight selected');
+
+    if (!selectedNodeId) return;
+
+    const selected = cy.getElementById(selectedNodeId);
+    if (!selected || selected.empty()) return;
+
+    const neighborhood = selected.closedNeighborhood();
+    const notNeighborhood = cy.elements().difference(neighborhood);
+
+    notNeighborhood.addClass('faded');
+    selected.addClass('selected');
+    neighborhood.addClass('highlight');
+  }, [cyInstance, selectedNodeId, elements]);
+
+  // Filter elements
   const filteredElements = useMemo(() => {
     let allowedNodeIds = new Set(nodes.map((n) => n.data.id));
 
-    // Event filter: keep only services that produce/consume this event
     if (selectedEvent !== ALL_EVENTS) {
       const eventNodeIds = new Set(
         nodes
@@ -202,22 +290,18 @@ export default function ServiceGraph() {
           })
           .map((n) => n.data.id)
       );
-
       allowedNodeIds = new Set(
         [...allowedNodeIds].filter((id) => eventNodeIds.has(id))
       );
     }
 
-    // Service filter: keep selected service and its direct neighbours
     if (selectedServiceFilter !== ALL_SERVICES) {
       const serviceContext = new Set([selectedServiceFilter]);
-
       edges.forEach((e) => {
         const { source, target } = e.data;
         if (source === selectedServiceFilter) serviceContext.add(target);
         if (target === selectedServiceFilter) serviceContext.add(source);
       });
-
       allowedNodeIds = new Set(
         [...allowedNodeIds].filter((id) => serviceContext.has(id))
       );
@@ -237,22 +321,28 @@ export default function ServiceGraph() {
       return true;
     });
 
-    return [...visibleNodes, ...visibleEdges];
-  }, [nodes, edges, selectedEvent, selectedServiceFilter]);
+    const all = [...visibleNodes, ...visibleEdges];
 
-  // Layout: concentric (busy services nearer centre)
-  const layout = {
-    name: 'concentric',
-    padding: 50,
-    minNodeSpacing: 60,
-    startAngle: (3 / 2) * Math.PI,
-    sweep: 2 * Math.PI,
-    clockwise: true,
-    concentric: (node) => node.data('weight') || 0,
-    levelWidth: () => (maxWeight || 1) / 4,
-  };
+    // Apply saved positions so layout doesn't reset
+    all.forEach((el) => {
+      if (el.data && positions[el.data.id]) {
+        el.position = positions[el.data.id];
+      }
+    });
 
-  // Cytoscape stylesheet
+    return all;
+  }, [
+    nodes,
+    edges,
+    selectedEvent,
+    selectedServiceFilter,
+    positions,
+  ]);
+
+  // We use a preset layout to respect node.position from elements
+  const layout = { name: 'preset' };
+
+  // Styles
   const stylesheet = [
     {
       selector: 'node',
@@ -281,6 +371,8 @@ export default function ServiceGraph() {
           const max = 110;
           return min + (w / maxWeight) * (max - min);
         },
+        'transition-property': 'background-color, border-color, opacity',
+        'transition-duration': '150ms',
       },
     },
     {
@@ -294,6 +386,14 @@ export default function ServiceGraph() {
       },
     },
     {
+      selector: 'edge[kind = "dependency"][critical = "true"]',
+      style: {
+        width: 2.5,
+        'line-color': '#fecaca',
+        'target-arrow-color': '#fecaca',
+      },
+    },
+    {
       selector: 'edge[kind = "event"]',
       style: {
         width: 1.5,
@@ -304,16 +404,36 @@ export default function ServiceGraph() {
         'curve-style': 'bezier',
       },
     },
+    {
+      selector: '.faded',
+      style: {
+        opacity: 0.15,
+      },
+    },
+    {
+      selector: 'node.selected',
+      style: {
+        'border-color': '#facc15',
+        'border-width': 3,
+        'background-color': '#4f46e5',
+      },
+    },
+    {
+      selector: 'edge.highlight',
+      style: {
+        'line-color': '#e5e7eb',
+        'target-arrow-color': '#e5e7eb',
+      },
+    },
   ];
 
-  // Build details for right-hand panel
+  // Details panel data
   const selectedDetails = useMemo(() => {
     if (!selectedNodeId) return null;
 
     const baseService = serviceById.get(selectedNodeId) || null;
     const node = nodes.find((n) => n.data.id === selectedNodeId);
     if (!node) return null;
-
     const nodeData = node.data;
 
     const inboundDeps = edges
@@ -321,16 +441,22 @@ export default function ServiceGraph() {
         (e) =>
           e.data.kind === 'dependency' && e.data.target === selectedNodeId
       )
-      .map((e) => e.data.source)
-      .sort();
+      .map((e) => ({
+        id: e.data.source,
+        critical: e.data.critical === 'true',
+      }))
+      .sort((a, b) => a.id.localeCompare(b.id));
 
     const outboundDeps = edges
       .filter(
         (e) =>
           e.data.kind === 'dependency' && e.data.source === selectedNodeId
       )
-      .map((e) => e.data.target)
-      .sort();
+      .map((e) => ({
+        id: e.data.target,
+        critical: e.data.critical === 'true',
+      }))
+      .sort((a, b) => a.id.localeCompare(b.id));
 
     const producedEvents = Array.from(
       new Set(nodeData.producedEvents || [])
@@ -349,6 +475,10 @@ export default function ServiceGraph() {
       consumedEvents,
     };
   }, [selectedNodeId, nodes, edges, serviceById]);
+
+  const handleResetSelection = () => {
+    setSelectedNodeId(null);
+  };
 
   return (
     <div
@@ -470,27 +600,49 @@ export default function ServiceGraph() {
 
       {/* MIDDLE GRAPH AREA */}
       <div style={{ flex: '1 1 auto' }}>
-        <CytoscapeComponent
-          cy={setCyInstance}
+        <CytoscapeView
           elements={filteredElements}
           layout={layout}
           stylesheet={stylesheet}
-          style={{ width: '100%', height: '100%' }}
+          onReady={setCyInstance}
         />
       </div>
 
       {/* RIGHT DETAILS PANEL */}
       <div
         style={{
-          width: 280,
+          width: 300,
           borderLeft: '1px solid #111827',
           padding: '10px 12px',
           boxSizing: 'border-box',
           background: '#020617',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
         }}
       >
-        <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
-          Service details
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div style={{ fontSize: 16, fontWeight: 600 }}>Service details</div>
+          <button
+            onClick={handleResetSelection}
+            style={{
+              fontSize: 11,
+              padding: '2px 8px',
+              borderRadius: 999,
+              border: '1px solid #374151',
+              background: '#020617',
+              color: '#e5e7eb',
+              cursor: 'pointer',
+            }}
+          >
+            Reset
+          </button>
         </div>
 
         {!selectedDetails && (
@@ -498,6 +650,7 @@ export default function ServiceGraph() {
             style={{
               fontSize: 12,
               color: '#9ca3af',
+              marginTop: 4,
             }}
           >
             Click a bubble to see full metadata.
@@ -511,6 +664,7 @@ export default function ServiceGraph() {
               display: 'flex',
               flexDirection: 'column',
               gap: 8,
+              overflowY: 'auto',
             }}
           >
             <div>
@@ -606,8 +760,12 @@ function Field({ label, value }) {
   );
 }
 
+// Handles either strings or {id, critical}
 function SectionList({ title, items }) {
   if (!items || items.length === 0) return null;
+
+  const isDepObjects = typeof items[0] === 'object' && items[0] !== null;
+
   return (
     <div>
       <div
@@ -630,22 +788,51 @@ function SectionList({ title, items }) {
           fontSize: 12,
           display: 'flex',
           flexDirection: 'column',
-          gap: 2,
+          gap: 4,
         }}
       >
-        {items.map((it) => (
-          <li
-            key={it}
-            style={{
-              padding: '2px 4px',
-              borderRadius: 4,
-              background: '#020617',
-              border: '1px solid #1f2937',
-            }}
-          >
-            {it}
-          </li>
-        ))}
+        {items.map((it) => {
+          const key = isDepObjects ? it.id : it;
+          const label = isDepObjects ? it.id : it;
+          const isCritical = isDepObjects && it.critical;
+
+          const bg = isCritical ? '#451a1a' : '#020617';
+          const border = isCritical ? '#f97373' : '#1f2937';
+          const color = isCritical ? '#fecaca' : '#e5e7eb';
+
+          return (
+            <li
+              key={key}
+              style={{
+                padding: '4px 6px',
+                borderRadius: 4,
+                background: bg,
+                border: `1px solid ${border}`,
+                color,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 6,
+              }}
+            >
+              <span>{label}</span>
+              {isCritical && (
+                <span
+                  style={{
+                    fontSize: 9,
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.08,
+                    padding: '1px 4px',
+                    borderRadius: 999,
+                    border: '1px solid #f97373',
+                  }}
+                >
+                  Critical
+                </span>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
