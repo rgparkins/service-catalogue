@@ -1,5 +1,5 @@
 // ServiceGraph.jsx
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import CytoscapeComponent from 'react-cytoscapejs';
 import services from './service-metadata.json';
 
@@ -11,7 +11,6 @@ function buildElements(services) {
   const producers = new Map(); // eventName -> Set(serviceId)
   const consumers = new Map(); // eventName -> Set(serviceId)
 
-  // 1) Build nodes and dependency edges
   services.forEach((svc) => {
     const id = svc.name;
     if (!id) return;
@@ -31,7 +30,7 @@ function buildElements(services) {
 
     const nodeData = nodesById.get(id).data;
 
-    // Dependencies
+    // Dependencies (critical + non-critical)
     const deps = [
       ...(svc.dependencies?.critical || []),
       ...(svc.dependencies?.['non-critical'] || []),
@@ -91,7 +90,7 @@ function buildElements(services) {
     });
   });
 
-  // 2) Event edges (producer -> consumer), dotted orange
+  // Event edges (producer -> consumer), dotted orange
   const allEventNames = new Set([
     ...producers.keys(),
     ...consumers.keys(),
@@ -117,7 +116,7 @@ function buildElements(services) {
     });
   });
 
-  // 3) Calculate weights for node sizing
+  // Calculate weights for node sizing
   let maxWeight = 0;
   nodesById.forEach((n, id) => {
     const w = inbound.get(id) || 0;
@@ -141,10 +140,25 @@ export default function ServiceGraph() {
     []
   );
 
+  // Dropdown filters
   const [selectedEvent, setSelectedEvent] = useState(ALL_EVENTS);
-  const [selectedService, setSelectedService] = useState(ALL_SERVICES);
+  const [selectedServiceFilter, setSelectedServiceFilter] =
+    useState(ALL_SERVICES);
 
-  // Split elements into nodes/edges for filtering logic
+  // Node clicked for details panel
+  const [selectedNodeId, setSelectedNodeId] = useState(null);
+  const [cyInstance, setCyInstance] = useState(null);
+
+  // Map id -> full service metadata
+  const serviceById = useMemo(() => {
+    const map = new Map();
+    services.forEach((svc) => {
+      if (svc.name) map.set(svc.name, svc);
+    });
+    return map;
+  }, []);
+
+  // Split elements into nodes/edges
   const nodes = useMemo(
     () => elements.filter((el) => !el.data.source && !el.data.target),
     [elements]
@@ -154,7 +168,23 @@ export default function ServiceGraph() {
     [elements]
   );
 
-  // Build filtered elements based on dropdowns
+  // Attach click handler to Cytoscape instance
+  useEffect(() => {
+    if (!cyInstance) return;
+
+    const handler = (evt) => {
+      const node = evt.target;
+      const id = node.id();
+      setSelectedNodeId(id);
+    };
+
+    cyInstance.on('tap', 'node', handler);
+    return () => {
+      cyInstance.removeListener('tap', 'node', handler);
+    };
+  }, [cyInstance]);
+
+  // Filtered elements based on dropdowns
   const filteredElements = useMemo(() => {
     let allowedNodeIds = new Set(nodes.map((n) => n.data.id));
 
@@ -179,13 +209,13 @@ export default function ServiceGraph() {
     }
 
     // Service filter: keep selected service and its direct neighbours
-    if (selectedService !== ALL_SERVICES) {
-      const serviceContext = new Set([selectedService]);
+    if (selectedServiceFilter !== ALL_SERVICES) {
+      const serviceContext = new Set([selectedServiceFilter]);
 
       edges.forEach((e) => {
         const { source, target } = e.data;
-        if (source === selectedService) serviceContext.add(target);
-        if (target === selectedService) serviceContext.add(source);
+        if (source === selectedServiceFilter) serviceContext.add(target);
+        if (target === selectedServiceFilter) serviceContext.add(source);
       });
 
       allowedNodeIds = new Set(
@@ -194,7 +224,6 @@ export default function ServiceGraph() {
     }
 
     const visibleNodes = nodes.filter((n) => allowedNodeIds.has(n.data.id));
-
     const visibleNodeIds = new Set(visibleNodes.map((n) => n.data.id));
 
     const visibleEdges = edges.filter((e) => {
@@ -202,7 +231,6 @@ export default function ServiceGraph() {
       if (!visibleNodeIds.has(source) || !visibleNodeIds.has(target)) {
         return false;
       }
-      // If filtering by event, only show that event's event-edges
       if (selectedEvent !== ALL_EVENTS && kind === 'event') {
         return eventName === selectedEvent;
       }
@@ -210,7 +238,7 @@ export default function ServiceGraph() {
     });
 
     return [...visibleNodes, ...visibleEdges];
-  }, [nodes, edges, selectedEvent, selectedService]);
+  }, [nodes, edges, selectedEvent, selectedServiceFilter]);
 
   // Layout: concentric (busy services nearer centre)
   const layout = {
@@ -278,6 +306,50 @@ export default function ServiceGraph() {
     },
   ];
 
+  // Build details for right-hand panel
+  const selectedDetails = useMemo(() => {
+    if (!selectedNodeId) return null;
+
+    const baseService = serviceById.get(selectedNodeId) || null;
+    const node = nodes.find((n) => n.data.id === selectedNodeId);
+    if (!node) return null;
+
+    const nodeData = node.data;
+
+    const inboundDeps = edges
+      .filter(
+        (e) =>
+          e.data.kind === 'dependency' && e.data.target === selectedNodeId
+      )
+      .map((e) => e.data.source)
+      .sort();
+
+    const outboundDeps = edges
+      .filter(
+        (e) =>
+          e.data.kind === 'dependency' && e.data.source === selectedNodeId
+      )
+      .map((e) => e.data.target)
+      .sort();
+
+    const producedEvents = Array.from(
+      new Set(nodeData.producedEvents || [])
+    ).sort();
+    const consumedEvents = Array.from(
+      new Set(nodeData.consumedEvents || [])
+    ).sort();
+
+    return {
+      id: selectedNodeId,
+      nodeData,
+      service: baseService,
+      inboundDeps,
+      outboundDeps,
+      producedEvents,
+      consumedEvents,
+    };
+  }, [selectedNodeId, nodes, edges, serviceById]);
+
   return (
     <div
       style={{
@@ -290,7 +362,7 @@ export default function ServiceGraph() {
           'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       }}
     >
-      {/* LEFT SIDE MENU */}
+      {/* LEFT FILTER PANEL */}
       <div
         style={{
           width: 260,
@@ -352,8 +424,8 @@ export default function ServiceGraph() {
             Service
           </div>
           <select
-            value={selectedService}
-            onChange={(e) => setSelectedService(e.target.value)}
+            value={selectedServiceFilter}
+            onChange={(e) => setSelectedServiceFilter(e.target.value)}
             style={{
               width: '100%',
               padding: '4px 6px',
@@ -388,23 +460,193 @@ export default function ServiceGraph() {
             <span>• event: {selectedEvent}</span>
           )}
           <br />
-          {selectedService === ALL_SERVICES ? (
+          {selectedServiceFilter === ALL_SERVICES ? (
             <span>• any service</span>
           ) : (
-            <span>• neighbourhood of: {selectedService}</span>
+            <span>• neighbourhood of: {selectedServiceFilter}</span>
           )}
         </div>
       </div>
 
-      {/* RIGHT GRAPH AREA */}
+      {/* MIDDLE GRAPH AREA */}
       <div style={{ flex: '1 1 auto' }}>
         <CytoscapeComponent
+          cy={setCyInstance}
           elements={filteredElements}
           layout={layout}
           stylesheet={stylesheet}
           style={{ width: '100%', height: '100%' }}
         />
       </div>
+
+      {/* RIGHT DETAILS PANEL */}
+      <div
+        style={{
+          width: 280,
+          borderLeft: '1px solid #111827',
+          padding: '10px 12px',
+          boxSizing: 'border-box',
+          background: '#020617',
+        }}
+      >
+        <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
+          Service details
+        </div>
+
+        {!selectedDetails && (
+          <div
+            style={{
+              fontSize: 12,
+              color: '#9ca3af',
+            }}
+          >
+            Click a bubble to see full metadata.
+          </div>
+        )}
+
+        {selectedDetails && (
+          <div
+            style={{
+              fontSize: 12,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontSize: 11,
+                  letterSpacing: 0.05,
+                  textTransform: 'uppercase',
+                  color: '#9ca3af',
+                  marginBottom: 4,
+                }}
+              >
+                Name
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 600 }}>
+                {selectedDetails.id}
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr',
+                gap: 6,
+              }}
+            >
+              <Field label="Domain" value={selectedDetails.service?.domain} />
+              <Field label="Team" value={selectedDetails.service?.team} />
+              <Field label="Owner" value={selectedDetails.service?.owner} />
+              <Field label="Repo" value={selectedDetails.service?.repo} />
+            </div>
+
+            {selectedDetails.service?.vision && (
+              <div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    letterSpacing: 0.05,
+                    textTransform: 'uppercase',
+                    color: '#9ca3af',
+                    marginBottom: 4,
+                  }}
+                >
+                  Vision
+                </div>
+                <div style={{ fontSize: 12, color: '#e5e7eb' }}>
+                  {selectedDetails.service.vision}
+                </div>
+              </div>
+            )}
+
+            <SectionList
+              title="Inbound dependencies"
+              items={selectedDetails.inboundDeps}
+            />
+            <SectionList
+              title="Outbound dependencies"
+              items={selectedDetails.outboundDeps}
+            />
+            <SectionList
+              title="Produces events"
+              items={selectedDetails.producedEvents}
+            />
+            <SectionList
+              title="Consumes events"
+              items={selectedDetails.consumedEvents}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Small helpers for nicer formatting
+function Field({ label, value }) {
+  if (!value) return null;
+  return (
+    <div>
+      <div
+        style={{
+          fontSize: 11,
+          letterSpacing: 0.05,
+          textTransform: 'uppercase',
+          color: '#9ca3af',
+          marginBottom: 2,
+        }}
+      >
+        {label}
+      </div>
+      <div style={{ fontSize: 12 }}>{value}</div>
+    </div>
+  );
+}
+
+function SectionList({ title, items }) {
+  if (!items || items.length === 0) return null;
+  return (
+    <div>
+      <div
+        style={{
+          fontSize: 11,
+          letterSpacing: 0.05,
+          textTransform: 'uppercase',
+          color: '#9ca3af',
+          marginBottom: 4,
+          marginTop: 4,
+        }}
+      >
+        {title}
+      </div>
+      <ul
+        style={{
+          listStyle: 'none',
+          padding: 0,
+          margin: 0,
+          fontSize: 12,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+        }}
+      >
+        {items.map((it) => (
+          <li
+            key={it}
+            style={{
+              padding: '2px 4px',
+              borderRadius: 4,
+              background: '#020617',
+              border: '1px solid #1f2937',
+            }}
+          >
+            {it}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
