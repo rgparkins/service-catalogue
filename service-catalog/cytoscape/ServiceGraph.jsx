@@ -163,10 +163,13 @@ export default function ServiceGraph() {
     []
   );
 
-  // Filters
   const [selectedEvent, setSelectedEvent] = useState(ALL_EVENTS);
   const [selectedServiceFilter, setSelectedServiceFilter] =
     useState(ALL_SERVICES);
+
+  // Edge visibility
+  const [showDependencies, setShowDependencies] = useState(true);
+  const [showEvents, setShowEvents] = useState(true);
 
   // Node clicked
   const [selectedNodeId, setSelectedNodeId] = useState(null);
@@ -312,12 +315,21 @@ export default function ServiceGraph() {
 
     const visibleEdges = edges.filter((e) => {
       const { source, target, kind, eventName } = e.data;
+
+      // Only keep edges whose endpoints are visible
       if (!visibleNodeIds.has(source) || !visibleNodeIds.has(target)) {
         return false;
       }
+
+      // Toggle by edge kind
+      if (kind === 'dependency' && !showDependencies) return false;
+      if (kind === 'event' && !showEvents) return false;
+
+      // If filtering by event, only show that event’s event-edges
       if (selectedEvent !== ALL_EVENTS && kind === 'event') {
         return eventName === selectedEvent;
       }
+
       return true;
     });
 
@@ -337,6 +349,8 @@ export default function ServiceGraph() {
     selectedEvent,
     selectedServiceFilter,
     positions,
+    showDependencies,
+    showEvents,
   ]);
 
   // We use a preset layout to respect node.position from elements
@@ -575,6 +589,62 @@ export default function ServiceGraph() {
           </select>
         </div>
 
+        {/* Edge type toggles */}
+        <div
+          style={{
+            fontSize: 13,
+            marginTop: 4,
+            paddingTop: 6,
+            borderTop: '1px solid #111827',
+          }}
+        >
+          <div
+            style={{
+              fontSize: 12,
+              color: '#9ca3af',
+              marginBottom: 4,
+            }}
+          >
+            Edge types
+          </div>
+
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 12,
+              marginBottom: 4,
+              cursor: 'pointer',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={showDependencies}
+              onChange={(e) => setShowDependencies(e.target.checked)}
+              style={{ cursor: 'pointer' }}
+            />
+            <span>API / service dependencies</span>
+          </label>
+
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 12,
+              cursor: 'pointer',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={showEvents}
+              onChange={(e) => setShowEvents(e.target.checked)}
+              style={{ cursor: 'pointer' }}
+            />
+            <span>Event dependencies</span>
+          </label>
+        </div>
         <div
           style={{
             marginTop: 8,
