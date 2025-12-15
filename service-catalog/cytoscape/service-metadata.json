@@ -8,7 +8,10 @@
     "domain": "platform",
     "team": "platform",
     "contracts": [
-      { "role": "event-bus", "protocol": "amqp" }
+      {
+        "role": "event-bus",
+        "protocol": "amqp"
+      }
     ],
     "dependencies": {
       "critical": [],
@@ -22,6 +25,10 @@
           "description": "Emitted when a learner completes or updates a learning activity."
         }
       ]
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0"
     }
   },
   {
@@ -33,11 +40,18 @@
     "domain": "learner",
     "team": "learner",
     "contracts": [
-      { "role": "learner-api", "protocol": "http" }
+      {
+        "role": "learner-api",
+        "protocol": "http"
+      }
     ],
     "dependencies": {
       "critical": [
-        { "name": "auth-service", "role": "authentication", "protocol": "http" }
+        {
+          "name": "auth-service",
+          "role": "authentication",
+          "protocol": "http"
+        }
       ],
       "non-critical": []
     },
@@ -54,6 +68,10 @@
           "description": "Emitted when core learner details or preferences change."
         }
       ]
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0"
     }
   },
   {
@@ -65,11 +83,18 @@
     "domain": "learner",
     "team": "learner",
     "contracts": [
-      { "role": "progress-api", "protocol": "http" }
+      {
+        "role": "progress-api",
+        "protocol": "http"
+      }
     ],
     "dependencies": {
       "critical": [
-        { "name": "learner-profile-service", "role": "learner-api", "protocol": "http" }
+        {
+          "name": "learner-profile-service",
+          "role": "learner-api",
+          "protocol": "http"
+        }
       ],
       "non-critical": []
     },
@@ -86,6 +111,10 @@
           "description": "Emitted when a learner hits a key progress milestone."
         }
       ]
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0"
     }
   },
   {
@@ -97,14 +126,25 @@
     "domain": "engagement",
     "team": "engagement",
     "contracts": [
-      { "role": "notification-api", "protocol": "http" }
+      {
+        "role": "notification-api",
+        "protocol": "http"
+      }
     ],
     "dependencies": {
       "critical": [
-        { "name": "event-bus-service", "role": "event-bus", "protocol": "amqp" }
+        {
+          "name": "event-bus-service",
+          "role": "event-bus",
+          "protocol": "amqp"
+        }
       ],
       "non-critical": [
-        { "name": "learner-profile-service", "role": "learner-api", "protocol": "http" }
+        {
+          "name": "learner-profile-service",
+          "role": "learner-api",
+          "protocol": "http"
+        }
       ]
     },
     "events": {
@@ -120,6 +160,10 @@
           "description": "Emitted when a notification is successfully sent."
         }
       ]
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0"
     }
   },
   {
@@ -131,15 +175,38 @@
     "domain": "reporting",
     "team": "reporting",
     "contracts": [
-      { "role": "reporting-api", "protocol": "http" }
+      {
+        "role": "reporting-api",
+        "protocol": "http"
+      }
     ],
     "dependencies": {
       "critical": [
-        { "name": "progress-tracking-service", "role": "progress-api", "protocol": "http" },
-        { "name": "learner-profile-service", "role": "learner-api", "protocol": "http" },
-        { "name": "analytics-pipeline-service", "role": "analytics-api", "protocol": "http" },
-        { "name": "payment-billing-service", "role": "billing-api", "protocol": "http" },
-        { "name": "content-catalog-service", "role": "catalog-api", "protocol": "http" }
+        {
+          "name": "progress-tracking-service",
+          "role": "progress-api",
+          "protocol": "http"
+        },
+        {
+          "name": "learner-profile-service",
+          "role": "learner-api",
+          "protocol": "http"
+        },
+        {
+          "name": "analytics-pipeline-service",
+          "role": "analytics-api",
+          "protocol": "http"
+        },
+        {
+          "name": "payment-billing-service",
+          "role": "billing-api",
+          "protocol": "http"
+        },
+        {
+          "name": "content-catalog-service",
+          "role": "catalog-api",
+          "protocol": "http"
+        }
       ],
       "non-critical": []
     },
@@ -156,6 +223,10 @@
           "description": "Emitted when a scheduled or on-demand report completes."
         }
       ]
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0"
     }
   },
   {
@@ -167,12 +238,19 @@
     "domain": "compliance",
     "team": "compliance",
     "contracts": [
-      { "role": "audit-log-api", "protocol": "http" }
+      {
+        "role": "audit-log-api",
+        "protocol": "http"
+      }
     ],
     "dependencies": {
       "critical": [],
       "non-critical": [
-        { "name": "auth-service", "role": "authentication", "protocol": "http" }
+        {
+          "name": "auth-service",
+          "role": "authentication",
+          "protocol": "http"
+        }
       ]
     },
     "events": {
@@ -183,6 +261,10 @@
         }
       ],
       "producing": []
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0"
     }
   },
   {
@@ -194,11 +276,18 @@
     "domain": "insights",
     "team": "insights",
     "contracts": [
-      { "role": "recommendation-api", "protocol": "http" }
+      {
+        "role": "recommendation-api",
+        "protocol": "http"
+      }
     ],
     "dependencies": {
       "critical": [
-        { "name": "content-catalog-service", "role": "catalog-api", "protocol": "http" }
+        {
+          "name": "content-catalog-service",
+          "role": "catalog-api",
+          "protocol": "http"
+        }
       ],
       "non-critical": []
     },
@@ -215,6 +304,10 @@
           "description": "Emitted when a new recommendation set is produced."
         }
       ]
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0"
     }
   },
   {
@@ -226,11 +319,18 @@
     "domain": "insights",
     "team": "insights",
     "contracts": [
-      { "role": "indexer-api", "protocol": "http" }
+      {
+        "role": "indexer-api",
+        "protocol": "http"
+      }
     ],
     "dependencies": {
       "critical": [
-        { "name": "content-catalog-service", "role": "catalog-api", "protocol": "http" }
+        {
+          "name": "content-catalog-service",
+          "role": "catalog-api",
+          "protocol": "http"
+        }
       ],
       "non-critical": []
     },
@@ -242,6 +342,10 @@
         }
       ],
       "producing": []
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0"
     }
   },
   {
@@ -253,11 +357,18 @@
     "domain": "engagement",
     "team": "engagement",
     "contracts": [
-      { "role": "badging-api", "protocol": "http" }
+      {
+        "role": "badging-api",
+        "protocol": "http"
+      }
     ],
     "dependencies": {
       "critical": [
-        { "name": "progress-tracking-service", "role": "progress-api", "protocol": "http" }
+        {
+          "name": "progress-tracking-service",
+          "role": "progress-api",
+          "protocol": "http"
+        }
       ],
       "non-critical": []
     },
@@ -274,6 +385,10 @@
           "description": "Emitted when a learner is granted a new badge."
         }
       ]
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0"
     }
   },
   {
@@ -285,11 +400,18 @@
     "domain": "learner",
     "team": "learner",
     "contracts": [
-      { "role": "learning-path-api", "protocol": "http" }
+      {
+        "role": "learning-path-api",
+        "protocol": "http"
+      }
     ],
     "dependencies": {
       "critical": [
-        { "name": "content-catalog-service", "role": "catalog-api", "protocol": "http" }
+        {
+          "name": "content-catalog-service",
+          "role": "catalog-api",
+          "protocol": "http"
+        }
       ],
       "non-critical": []
     },
@@ -306,6 +428,10 @@
           "description": "Emitted when a learner completes all items in a path."
         }
       ]
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0"
     }
   },
   {
@@ -317,12 +443,23 @@
     "domain": "platform",
     "team": "platform",
     "contracts": [
-      { "role": "edge-proxy", "protocol": "http" }
+      {
+        "role": "edge-proxy",
+        "protocol": "http"
+      }
     ],
     "dependencies": {
       "critical": [
-        { "name": "auth-service", "role": "authentication", "protocol": "http" },
-        { "name": "learner-profile-service", "role": "learner-api", "protocol": "http" }
+        {
+          "name": "auth-service",
+          "role": "authentication",
+          "protocol": "http"
+        },
+        {
+          "name": "learner-profile-service",
+          "role": "learner-api",
+          "protocol": "http"
+        }
       ],
       "non-critical": []
     },
@@ -334,6 +471,10 @@
         }
       ],
       "producing": []
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0"
     }
   },
   {
@@ -345,7 +486,10 @@
     "domain": "security",
     "team": "security",
     "contracts": [
-      { "role": "authentication", "protocol": "http" }
+      {
+        "role": "authentication",
+        "protocol": "http"
+      }
     ],
     "dependencies": {
       "critical": [],
@@ -354,6 +498,10 @@
     "events": {
       "consuming": [],
       "producing": []
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0"
     }
   },
   {
@@ -365,7 +513,10 @@
     "domain": "content",
     "team": "content",
     "contracts": [
-      { "role": "catalog-api", "protocol": "http" }
+      {
+        "role": "catalog-api",
+        "protocol": "http"
+      }
     ],
     "dependencies": {
       "critical": [],
@@ -374,6 +525,10 @@
     "events": {
       "consuming": [],
       "producing": []
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0"
     }
   },
   {
@@ -385,11 +540,18 @@
     "domain": "billing",
     "team": "billing",
     "contracts": [
-      { "role": "billing-api", "protocol": "http" }
+      {
+        "role": "billing-api",
+        "protocol": "http"
+      }
     ],
     "dependencies": {
       "critical": [
-        { "name": "auth-service", "role": "authentication", "protocol": "http" }
+        {
+          "name": "auth-service",
+          "role": "authentication",
+          "protocol": "http"
+        }
       ],
       "non-critical": []
     },
@@ -401,6 +563,10 @@
           "description": "Emitted when an invoice or payment changes status."
         }
       ]
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0"
     }
   },
   {
@@ -412,7 +578,10 @@
     "domain": "employer",
     "team": "employer",
     "contracts": [
-      { "role": "organisation-api", "protocol": "http" }
+      {
+        "role": "organisation-api",
+        "protocol": "http"
+      }
     ],
     "dependencies": {
       "critical": [],
@@ -421,6 +590,10 @@
     "events": {
       "consuming": [],
       "producing": []
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0"
     }
   },
   {
@@ -432,18 +605,33 @@
     "domain": "tutor",
     "team": "tutor",
     "contracts": [
-      { "role": "tutor-portal-api", "protocol": "http" }
+      {
+        "role": "tutor-portal-api",
+        "protocol": "http"
+      }
     ],
     "dependencies": {
       "critical": [
-        { "name": "learner-profile-service", "role": "learner-api", "protocol": "http" },
-        { "name": "organisation-directory-service", "role": "organisation-api", "protocol": "http" }
+        {
+          "name": "learner-profile-service",
+          "role": "learner-api",
+          "protocol": "http"
+        },
+        {
+          "name": "organisation-directory-service",
+          "role": "organisation-api",
+          "protocol": "http"
+        }
       ],
       "non-critical": []
     },
     "events": {
       "consuming": [],
       "producing": []
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0"
     }
   },
   {
@@ -455,18 +643,33 @@
     "domain": "employer",
     "team": "employer",
     "contracts": [
-      { "role": "employer-portal-api", "protocol": "http" }
+      {
+        "role": "employer-portal-api",
+        "protocol": "http"
+      }
     ],
     "dependencies": {
       "critical": [
-        { "name": "organisation-directory-service", "role": "organisation-api", "protocol": "http" },
-        { "name": "reporting-aggregator-service", "role": "reporting-api", "protocol": "http" }
+        {
+          "name": "organisation-directory-service",
+          "role": "organisation-api",
+          "protocol": "http"
+        },
+        {
+          "name": "reporting-aggregator-service",
+          "role": "reporting-api",
+          "protocol": "http"
+        }
       ],
       "non-critical": []
     },
     "events": {
       "consuming": [],
       "producing": []
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0"
     }
   },
   {
@@ -478,7 +681,10 @@
     "domain": "platform",
     "team": "platform",
     "contracts": [
-      { "role": "file-storage-api", "protocol": "http" }
+      {
+        "role": "file-storage-api",
+        "protocol": "http"
+      }
     ],
     "dependencies": {
       "critical": [],
@@ -487,6 +693,10 @@
     "events": {
       "consuming": [],
       "producing": []
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0"
     }
   },
   {
@@ -498,11 +708,18 @@
     "domain": "insights",
     "team": "insights",
     "contracts": [
-      { "role": "analytics-api", "protocol": "http" }
+      {
+        "role": "analytics-api",
+        "protocol": "http"
+      }
     ],
     "dependencies": {
       "critical": [
-        { "name": "event-bus-service", "role": "event-bus", "protocol": "amqp" }
+        {
+          "name": "event-bus-service",
+          "role": "event-bus",
+          "protocol": "amqp"
+        }
       ],
       "non-critical": []
     },
@@ -514,6 +731,10 @@
         }
       ],
       "producing": []
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0"
     }
   },
   {
@@ -525,7 +746,10 @@
     "domain": "platform",
     "team": "platform",
     "contracts": [
-      { "role": "config-api", "protocol": "http" }
+      {
+        "role": "config-api",
+        "protocol": "http"
+      }
     ],
     "dependencies": {
       "critical": [],
@@ -534,6 +758,10 @@
     "events": {
       "consuming": [],
       "producing": []
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0"
     }
   }
 ]
