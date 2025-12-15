@@ -2,6 +2,27 @@ import React, { useMemo, useState, useEffect } from 'react';
 import CytoscapeView from './CytoscapeView.jsx';
 import services from './service-metadata.json';
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function daysSince(dateStr) {
+  if (!dateStr) return Number.POSITIVE_INFINITY;
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return Number.POSITIVE_INFINITY;
+  return Math.floor((Date.now() - d.getTime()) / MS_PER_DAY);
+}
+
+function ragColorFromUpdatedAt(updatedAt) {
+  const days = daysSince(updatedAt);
+
+  // thresholds (approx)
+  const GREEN_DAYS = 31;     // <= 1 month
+  const RED_DAYS = 183;      // > 6 months
+
+  if (days <= GREEN_DAYS) return "#22c55e";   // green 
+  if (days > RED_DAYS) return "#ef4444";      // red
+  return "#f59e0b";                           // amber
+}
+
 // Build Cytoscape elements and metadata from your JSON
 function buildElements(services) {
   const nodesById = new Map();
@@ -14,18 +35,26 @@ function buildElements(services) {
     const id = svc.name;
     if (!id) return;
 
+    // Ensure node exists (create if missing)
     if (!nodesById.has(id)) {
-      nodesById.set(id, {
-        data: {
-          id,
-          label: id,
-          type: svc.contracts?.[0]?.role || 'service',
-          weight: 0,
-          producedEvents: [],
-          consumedEvents: [],
-        },
-      });
+      nodesById.set(id, { data: { id, label: id } });
     }
+
+    // ALWAYS update node fields for real services (even if it already existed)
+    const node = nodesById.get(id);
+    const updatedAt = svc?.metadata?.updatedAt ?? null;
+
+    node.data = {
+      ...node.data,
+      id,
+      label: id,
+      type: svc.contracts?.[0]?.role || 'service',
+      weight: 0,
+      producedEvents: [],
+      consumedEvents: [],
+      ragColor: ragColorFromUpdatedAt(updatedAt),
+      updatedAt
+    };
 
     const nodeData = nodesById.get(id).data;
 
@@ -361,7 +390,7 @@ export default function ServiceGraph() {
     {
       selector: 'node',
       style: {
-        'background-color': '#3b82f6',
+        'background-color': 'data(ragColor)',
         label: 'data(label)',
         'font-size': 10,
         color: '#e5e7eb',
@@ -428,8 +457,7 @@ export default function ServiceGraph() {
       selector: 'node.selected',
       style: {
         'border-color': '#facc15',
-        'border-width': 3,
-        'background-color': '#4f46e5',
+        'border-width': 3
       },
     },
     {
@@ -765,6 +793,8 @@ export default function ServiceGraph() {
               <Field label="Team" value={selectedDetails.service?.team} />
               <Field label="Owner" value={selectedDetails.service?.owner} />
               <Field label="Repo" value={selectedDetails.service?.repo} />
+              <Field label="Created" value={selectedDetails.service?.metadata?.createdAt} />
+              <Field label="Updated" value={selectedDetails.service?.metadata?.updatedAt} />
             </div>
 
             {selectedDetails.service?.vision && (
