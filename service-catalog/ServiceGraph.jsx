@@ -364,7 +364,32 @@ export default function ServiceGraph() {
         .slice(0, 5);
     }, [nodes]);
   
-    const topByDependencyConsumers = useMemo(() => {
+    const orphanPublishedEvents = useMemo(() => {
+      const producersByEvent = new Map(); // event -> Set(producers)
+      const consumersByEvent = new Map(); // event -> Set(consumers)
+
+      nodes.forEach((n) => {
+        (n.data.producedEvents || []).forEach((ev) => {
+          if (!producersByEvent.has(ev)) producersByEvent.set(ev, new Set());
+          producersByEvent.get(ev).add(n.data.id);
+        });
+
+        (n.data.consumedEvents || []).forEach((ev) => {
+          if (!consumersByEvent.has(ev)) consumersByEvent.set(ev, new Set());
+          consumersByEvent.get(ev).add(n.data.id);
+        });
+      });
+
+      return Array.from(producersByEvent.entries())
+        .filter(([eventName]) => !consumersByEvent.has(eventName))
+        .map(([eventName, producers]) => ({
+          eventName,
+          producers: Array.from(producers).sort(),
+        }))
+        .sort((a, b) => a.eventName.localeCompare(b.eventName));
+    }, [nodes]);
+
+  const topByDependencyConsumers = useMemo(() => {
       const inboundCounts = new Map();
 
       // Initialise counts
@@ -877,6 +902,65 @@ export default function ServiceGraph() {
   </div>
 </div>
         
+        {/* Orphan published events */}
+          <div
+            style={{
+              marginTop: 14,
+              paddingTop: 8,
+              borderTop: '1px solid #111827',
+            }}
+          >
+            <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
+              Unconsumed published events
+            </div>
+
+            {orphanPublishedEvents.length === 0 ? (
+              <div style={{ fontSize: 11, color: '#9ca3af' }}>
+                None 🎉
+              </div>
+            ) : (
+              <ul
+                style={{
+                  listStyle: 'none',
+                  padding: 0,
+                  margin: 0,
+                  fontSize: 11,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 6,
+                }}
+              >
+                {orphanPublishedEvents.map((e) => (
+                  <li
+                    key={e.eventName}
+                    style={{
+                      border: '1px solid #1f2937',
+                      borderRadius: 6,
+                      padding: '6px 8px',
+                      background: '#020617',
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        color: '#e5e7eb',
+                        marginBottom: 2,
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {e.eventName}
+                    </div>
+                    <div style={{ color: '#9ca3af' }}>
+                      Published by:{' '}
+                      {e.producers.join(', ')}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+
         {/* Edge type toggles */}
         <div
           style={{
