@@ -364,6 +364,28 @@ export default function ServiceGraph() {
         .slice(0, 5);
     }, [nodes]);
   
+    const topByDependencyConsumers = useMemo(() => {
+      const inboundCounts = new Map();
+
+      // Initialise counts
+      nodes.forEach((n) => {
+        inboundCounts.set(n.data.id, 0);
+      });
+
+      // Count inbound dependencies
+      edges.forEach((e) => {
+        if (e.data.kind !== 'dependency') return;
+
+        const target = e.data.target;
+        inboundCounts.set(target, (inboundCounts.get(target) || 0) + 1);
+      });
+
+      return Array.from(inboundCounts.entries())
+        .map(([id, count]) => ({ id, count }))
+        .filter((x) => x.count > 0)
+        .sort((a, b) => b.count - a.count || a.id.localeCompare(b.id))
+        .slice(0, 5);
+    }, [nodes, edges]);
     
     // Filter elements
     const filteredElements = useMemo(() => {
@@ -695,7 +717,7 @@ export default function ServiceGraph() {
         marginBottom: 6,
       }}
     >
-      Top 5 by consumers
+      Top 5 by event consumers
     </div>
 
     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -707,6 +729,62 @@ export default function ServiceGraph() {
       </thead>
       <tbody>
         {topByConsumers.map((s) => (
+          <tr
+            key={s.id}
+            onClick={() => setSelectedNodeId(s.id)}
+            style={{
+              cursor: 'pointer',
+            }}
+          >
+            <td
+              style={{
+                padding: '3px 0',
+                color: '#e5e7eb',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: 150,
+              }}
+              title={s.id}
+            >
+              {s.id}
+            </td>
+            <td
+              style={{
+                padding: '3px 0',
+                textAlign: 'right',
+                color: '#9ca3af',
+              }}
+            >
+              {s.count}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  {/* Top 5 by consumers */}
+  <div style={{ marginBottom: 14 }}>
+    <div
+      style={{
+        fontSize: 12,
+        fontWeight: 600,
+        marginBottom: 6,
+      }}
+    >
+      Top 5 by API consumers
+    </div>
+
+    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <thead>
+        <tr style={{ color: '#9ca3af', fontSize: 10 }}>
+          <th style={{ textAlign: 'left', paddingBottom: 4 }}>Service</th>
+          <th style={{ textAlign: 'right', paddingBottom: 4 }}>Consumers</th>
+        </tr>
+      </thead>
+      <tbody>
+        {topByDependencyConsumers.map((s) => (
           <tr
             key={s.id}
             onClick={() => setSelectedNodeId(s.id)}
