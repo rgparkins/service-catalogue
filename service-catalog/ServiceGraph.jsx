@@ -305,8 +305,68 @@ export default function ServiceGraph() {
     neighborhood.addClass('highlight');
   }, [cyInstance, selectedNodeId, elements]);
 
-  // Filter elements
-  const filteredElements = useMemo(() => {
+  
+    /* ---------- TOP 5 LISTS ---------- */
+    function normEvent(name) {
+      return String(name || '').trim().toLowerCase();
+    }
+
+    const topByConsumers = useMemo(() => {
+      // eventName -> Set(consumer service ids)
+      const consumersByEvent = new Map();
+
+      nodes.forEach((n) => {
+        (n.data.consumedEvents || []).forEach((ev) => {
+          const k = normEvent(ev);
+          if (!k) return;
+          if (!consumersByEvent.has(k)) consumersByEvent.set(k, new Set());
+          consumersByEvent.get(k).add(n.data.id);
+        });
+      });
+
+      // For each service, sum consumers of its published events
+      const ranked = nodes.map((n) => {
+        const id = n.data.id;
+        const produced = n.data.producedEvents || [];
+
+        let totalConsumers = 0;
+
+        produced.forEach((ev) => {
+          const k = normEvent(ev);
+          const consumers = consumersByEvent.get(k);
+          if (!consumers) return;
+
+          // Optional: exclude self if service both produces & consumes
+          const count = consumers.has(id)
+            ? consumers.size - 1
+            : consumers.size;
+
+          totalConsumers += Math.max(0, count);
+        });
+
+        return { id, count: totalConsumers };
+      });
+
+      return ranked
+        .filter((r) => r.count > 0) // optional: remove zero-fanout services
+        .sort((a, b) => b.count - a.count || a.id.localeCompare(b.id))
+        .slice(0, 5);
+    }, [nodes]);
+  
+    const topByOldestUpdate = useMemo(() => {
+      return nodes
+        .map((n) => ({
+          id: n.data.id,
+          daysAgo: daysSince(n.data.updatedAt),
+        }))
+        .filter((n) => Number.isFinite(n.daysAgo))
+        .sort((a, b) => b.daysAgo - a.daysAgo)
+        .slice(0, 5);
+    }, [nodes]);
+  
+    
+    // Filter elements
+    const filteredElements = useMemo(() => {
     let allowedNodeIds = new Set(nodes.map((n) => n.data.id));
 
     if (selectedEvent !== ALL_EVENTS) {
@@ -617,6 +677,128 @@ export default function ServiceGraph() {
           </select>
         </div>
 
+        {/* TOP 5 TABLES */}
+<div
+  style={{
+    marginTop: 12,
+    paddingTop: 8,
+    borderTop: '1px solid #111827',
+    fontSize: 11,
+  }}
+>
+  {/* Top 5 by consumers */}
+  <div style={{ marginBottom: 14 }}>
+    <div
+      style={{
+        fontSize: 12,
+        fontWeight: 600,
+        marginBottom: 6,
+      }}
+    >
+      Top 5 by consumers
+    </div>
+
+    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <thead>
+        <tr style={{ color: '#9ca3af', fontSize: 10 }}>
+          <th style={{ textAlign: 'left', paddingBottom: 4 }}>Service</th>
+          <th style={{ textAlign: 'right', paddingBottom: 4 }}>Consumers</th>
+        </tr>
+      </thead>
+      <tbody>
+        {topByConsumers.map((s) => (
+          <tr
+            key={s.id}
+            onClick={() => setSelectedNodeId(s.id)}
+            style={{
+              cursor: 'pointer',
+            }}
+          >
+            <td
+              style={{
+                padding: '3px 0',
+                color: '#e5e7eb',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: 150,
+              }}
+              title={s.id}
+            >
+              {s.id}
+            </td>
+            <td
+              style={{
+                padding: '3px 0',
+                textAlign: 'right',
+                color: '#9ca3af',
+              }}
+            >
+              {s.count}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  {/* Top 5 by oldest updated */}
+  <div>
+    <div
+      style={{
+        fontSize: 12,
+        fontWeight: 600,
+        marginBottom: 6,
+      }}
+    >
+      Oldest updated
+    </div>
+
+    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <thead>
+        <tr style={{ color: '#9ca3af', fontSize: 10 }}>
+          <th style={{ textAlign: 'left', paddingBottom: 4 }}>Service</th>
+          <th style={{ textAlign: 'right', paddingBottom: 4 }}>Days</th>
+        </tr>
+      </thead>
+      <tbody>
+        {topByOldestUpdate.map((s) => (
+          <tr
+            key={s.id}
+            onClick={() => setSelectedNodeId(s.id)}
+            style={{
+              cursor: 'pointer',
+            }}
+          >
+            <td
+              style={{
+                padding: '3px 0',
+                color: '#e5e7eb',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: 150,
+              }}
+              title={s.id}
+            >
+              {s.id}
+            </td>
+            <td
+              style={{
+                padding: '3px 0',
+                textAlign: 'right',
+                color: '#9ca3af',
+              }}
+            >
+              {s.daysAgo}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
+        
         {/* Edge type toggles */}
         <div
           style={{

@@ -1,38 +1,5 @@
 [
   {
-    "name": "event-bus-service",
-    "owner": "team-platform@company.com",
-    "documentation": "",
-    "vision": "Central event bus for publishing domain events between services.",
-    "repo": "https://github.com/company/event-bus-service",
-    "domain": "platform",
-    "team": "platform",
-    "contracts": [
-      {
-        "role": "event-bus",
-        "protocol": "amqp"
-      }
-    ],
-    "dependencies": {
-      "critical": [],
-      "non-critical": []
-    },
-    "events": {
-      "consuming": [],
-      "producing": [
-        {
-          "name": "LearningActivityRecorded",
-          "description": "Emitted when a learner completes or updates a learning activity."
-        }
-      ]
-    },
-    "metadata": {
-      "updatedAt": "2025-12-15",
-      "version": "1.0.0",
-      "createdAt": "2025-12-15"
-    }
-  },
-  {
     "name": "learner-profile-service",
     "owner": "team-learner@company.com",
     "documentation": "",
@@ -57,21 +24,21 @@
       "non-critical": []
     },
     "events": {
-      "consuming": [
-        {
-          "name": "LearningActivityRecorded",
-          "description": "Updates learner progression and last-activity timestamps."
-        }
-      ],
       "producing": [
         {
-          "name": "LearnerProfileUpdated",
-          "description": "Emitted when core learner details or preferences change."
+          "name": "BadgeAwarded",
+          "description": "Emitted when a learner is granted a new badge."
+        }
+      ],
+      "consuming": [
+        {
+          "name": "NotificationDispatched",
+          "description": "Emitted when a notification is successfully sent."
         }
       ]
     },
     "metadata": {
-      "updatedAt": "2025-12-15",
+      "updatedAt": "2025-06-20",
       "version": "1.0.0",
       "createdAt": "2025-12-15"
     }
@@ -101,16 +68,16 @@
       "non-critical": []
     },
     "events": {
+      "producing": [
+        {
+          "name": "ReportGenerated",
+          "description": "Emitted when a scheduled or on-demand report completes."
+        }
+      ],
       "consuming": [
         {
           "name": "LearningActivityRecorded",
-          "description": "Calculates completion percentages and milestones."
-        }
-      ],
-      "producing": [
-        {
-          "name": "ProgressMilestoneReached",
-          "description": "Emitted when a learner hits a key progress milestone."
+          "description": "Updates learner progression and last-activity timestamps."
         }
       ]
     },
@@ -135,13 +102,7 @@
       }
     ],
     "dependencies": {
-      "critical": [
-        {
-          "name": "event-bus-service",
-          "role": "event-bus",
-          "protocol": "amqp"
-        }
-      ],
+      "critical": [],
       "non-critical": [
         {
           "name": "learner-profile-service",
@@ -151,21 +112,21 @@
       ]
     },
     "events": {
-      "consuming": [
-        {
-          "name": "LearningActivityRecorded",
-          "description": "Triggers nudges and reminders based on activity patterns."
-        }
-      ],
       "producing": [
         {
-          "name": "NotificationDispatched",
-          "description": "Emitted when a notification is successfully sent."
+          "name": "ProgressMilestoneReached",
+          "description": "Emitted when a learner hits a key progress milestone."
+        }
+      ],
+      "consuming": [
+        {
+          "name": "PaymentStatusChanged",
+          "description": "Emitted when an invoice or payment changes status."
         }
       ]
     },
     "metadata": {
-      "updatedAt": "2025-12-15",
+      "updatedAt": "2025-03-28",
       "version": "1.0.0",
       "createdAt": "2025-12-15"
     }
@@ -215,21 +176,21 @@
       "non-critical": []
     },
     "events": {
-      "consuming": [
-        {
-          "name": "LearningActivityRecorded",
-          "description": "Feeds raw activity data into aggregated reports."
-        }
-      ],
       "producing": [
         {
-          "name": "ReportGenerated",
-          "description": "Emitted when a scheduled or on-demand report completes."
+          "name": "BadgeAwarded",
+          "description": "Emitted when a learner is granted a new badge."
+        }
+      ],
+      "consuming": [
+        {
+          "name": "RecommendationsGenerated",
+          "description": "Emitted when a new recommendation set is produced."
         }
       ]
     },
     "metadata": {
-      "updatedAt": "2025-12-15",
+      "updatedAt": "2025-05-02",
       "version": "1.0.0",
       "createdAt": "2025-12-15"
     }
@@ -259,16 +220,16 @@
       ]
     },
     "events": {
+      "producing": [],
       "consuming": [
         {
-          "name": "LearningActivityRecorded",
-          "description": "Stores a compliance event for each recorded activity."
+          "name": "ProgressMilestoneReached",
+          "description": "Emitted when a learner hits a key progress milestone."
         }
-      ],
-      "producing": []
+      ]
     },
     "metadata": {
-      "updatedAt": "2025-12-15",
+      "updatedAt": "2025-12-10",
       "version": "1.0.0",
       "createdAt": "2025-12-15"
     }
@@ -298,21 +259,21 @@
       "non-critical": []
     },
     "events": {
-      "consuming": [
-        {
-          "name": "LearningActivityRecorded",
-          "description": "Updates models based on learner activity signals."
-        }
-      ],
       "producing": [
         {
           "name": "RecommendationsGenerated",
           "description": "Emitted when a new recommendation set is produced."
         }
+      ],
+      "consuming": [
+        {
+          "name": "ProgressMilestoneReached",
+          "description": "Emitted when a learner hits a key progress milestone."
+        }
       ]
     },
     "metadata": {
-      "updatedAt": "2025-12-15",
+      "updatedAt": "2025-02-03",
       "version": "1.0.0",
       "createdAt": "2025-12-15"
     }
@@ -342,16 +303,16 @@
       "non-critical": []
     },
     "events": {
+      "producing": [],
       "consuming": [
         {
-          "name": "LearningActivityRecorded",
-          "description": "Indexes activity records to support search and filters."
+          "name": "NotificationDispatched",
+          "description": "Emitted when a notification is successfully sent."
         }
-      ],
-      "producing": []
+      ]
     },
     "metadata": {
-      "updatedAt": "2025-12-15",
+      "updatedAt": "2025-06-21",
       "version": "1.0.0",
       "createdAt": "2025-12-15"
     }
@@ -381,21 +342,21 @@
       "non-critical": []
     },
     "events": {
-      "consuming": [
-        {
-          "name": "LearningActivityRecorded",
-          "description": "Evaluates whether criteria have been met for new badges."
-        }
-      ],
       "producing": [
         {
-          "name": "BadgeAwarded",
-          "description": "Emitted when a learner is granted a new badge."
+          "name": "PaymentStatusChanged",
+          "description": "Emitted when an invoice or payment changes status."
+        }
+      ],
+      "consuming": [
+        {
+          "name": "LearnerProfileUpdated",
+          "description": "Emitted when core learner details or preferences change."
         }
       ]
     },
     "metadata": {
-      "updatedAt": "2025-12-15",
+      "updatedAt": "2025-12-03",
       "version": "1.0.0",
       "createdAt": "2025-12-15"
     }
@@ -425,21 +386,21 @@
       "non-critical": []
     },
     "events": {
-      "consuming": [
-        {
-          "name": "LearningActivityRecorded",
-          "description": "Recomputes path progress and completion state."
-        }
-      ],
       "producing": [
         {
-          "name": "LearningPathCompleted",
-          "description": "Emitted when a learner completes all items in a path."
+          "name": "LearnerProfileUpdated",
+          "description": "Emitted when core learner details or preferences change."
+        }
+      ],
+      "consuming": [
+        {
+          "name": "ReportGenerated",
+          "description": "Emitted when a scheduled or on-demand report completes."
         }
       ]
     },
     "metadata": {
-      "updatedAt": "2025-12-15",
+      "updatedAt": "2025-04-27",
       "version": "1.0.0",
       "createdAt": "2025-12-15"
     }
@@ -474,16 +435,21 @@
       "non-critical": []
     },
     "events": {
-      "consuming": [
+      "producing": [
         {
-          "name": "LearningActivityRecorded",
-          "description": "Used to trigger local cache updates for mobile clients."
+          "name": "NotificationDispatched",
+          "description": "Emitted when a notification is successfully sent."
         }
       ],
-      "producing": []
+      "consuming": [
+        {
+          "name": "ProgressMilestoneReached",
+          "description": "Emitted when a learner hits a key progress milestone."
+        }
+      ]
     },
     "metadata": {
-      "updatedAt": "2025-12-15",
+      "updatedAt": "2025-02-13",
       "version": "1.0.0",
       "createdAt": "2025-12-15"
     }
@@ -507,11 +473,11 @@
       "non-critical": []
     },
     "events": {
-      "consuming": [],
-      "producing": []
+      "producing": [],
+      "consuming": []
     },
     "metadata": {
-      "updatedAt": "2024-12-15",
+      "updatedAt": "2024-12-10",
       "version": "1.0.0",
       "createdAt": "2025-12-15"
     }
@@ -535,11 +501,11 @@
       "non-critical": []
     },
     "events": {
-      "consuming": [],
-      "producing": []
+      "producing": [],
+      "consuming": []
     },
     "metadata": {
-      "updatedAt": "2025-12-15",
+      "updatedAt": "2025-06-13",
       "version": "1.0.0",
       "createdAt": "2025-12-15"
     }
@@ -569,16 +535,16 @@
       "non-critical": []
     },
     "events": {
-      "consuming": [],
       "producing": [
         {
-          "name": "PaymentStatusChanged",
-          "description": "Emitted when an invoice or payment changes status."
+          "name": "LearningActivityRecorded",
+          "description": "Updates learner progression and last-activity timestamps."
         }
-      ]
+      ],
+      "consuming": []
     },
     "metadata": {
-      "updatedAt": "2025-12-15",
+      "updatedAt": "2025-09-03",
       "version": "1.0.0",
       "createdAt": "2025-12-15"
     }
@@ -602,11 +568,11 @@
       "non-critical": []
     },
     "events": {
-      "consuming": [],
-      "producing": []
+      "producing": [],
+      "consuming": []
     },
     "metadata": {
-      "updatedAt": "2025-12-15",
+      "updatedAt": "2025-02-08",
       "version": "1.0.0",
       "createdAt": "2025-12-15"
     }
@@ -641,11 +607,11 @@
       "non-critical": []
     },
     "events": {
-      "consuming": [],
-      "producing": []
+      "producing": [],
+      "consuming": []
     },
     "metadata": {
-      "updatedAt": "2025-12-15",
+      "updatedAt": "2025-11-27",
       "version": "1.0.0",
       "createdAt": "2025-12-15"
     }
@@ -680,11 +646,11 @@
       "non-critical": []
     },
     "events": {
-      "consuming": [],
-      "producing": []
+      "producing": [],
+      "consuming": []
     },
     "metadata": {
-      "updatedAt": "2025-12-15",
+      "updatedAt": "2025-12-03",
       "version": "1.0.0",
       "createdAt": "2025-12-15"
     }
@@ -708,11 +674,11 @@
       "non-critical": []
     },
     "events": {
-      "consuming": [],
-      "producing": []
+      "producing": [],
+      "consuming": []
     },
     "metadata": {
-      "updatedAt": "2025-12-15",
+      "updatedAt": "2024-12-21",
       "version": "1.0.0",
       "createdAt": "2025-12-15"
     }
@@ -732,26 +698,20 @@
       }
     ],
     "dependencies": {
-      "critical": [
-        {
-          "name": "event-bus-service",
-          "role": "event-bus",
-          "protocol": "amqp"
-        }
-      ],
+      "critical": [],
       "non-critical": []
     },
     "events": {
+      "producing": [],
       "consuming": [
         {
-          "name": "LearningActivityRecorded",
-          "description": "Ingests raw activity into the analytics warehouse."
+          "name": "PaymentStatusChanged",
+          "description": "Emitted when an invoice or payment changes status."
         }
-      ],
-      "producing": []
+      ]
     },
     "metadata": {
-      "updatedAt": "2025-12-15",
+      "updatedAt": "2025-02-19",
       "version": "1.0.0",
       "createdAt": "2025-12-15"
     }
@@ -775,11 +735,11 @@
       "non-critical": []
     },
     "events": {
-      "consuming": [],
-      "producing": []
+      "producing": [],
+      "consuming": []
     },
     "metadata": {
-      "updatedAt": "2025-12-15",
+      "updatedAt": "2025-01-16",
       "version": "1.0.0",
       "createdAt": "2025-12-15"
     }
