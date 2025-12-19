@@ -1,0 +1,292 @@
+import React, { useMemo, useState, useEffect, useRef } from 'react';
+import cytoscape from 'cytoscape';
+import CytoscapeView from './CytoscapeView.jsx';
+import services from './service-metadata.json';
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const ALL_EVENTS = 'ALL_EVENTS';
+const ALL_SERVICES = 'ALL_SERVICES';
+
+function daysSince(dateStr) {
+  if (!dateStr) return Number.POSITIVE_INFINITY;
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return Number.POSITIVE_INFINITY;
+  return Math.floor((Date.now() - d.getTime()) / MS_PER_DAY);
+}
+
+function ragColorFromUpdatedAt(updatedAt) {
+  const days = daysSince(updatedAt);
+  if (days <= 31) return '#22c55e';   // green
+  if (days > 183) return '#ef4444';   // red
+  return '#f59e0b';                   // amber
+}
+
+/* ---------------- BUILD ELEMENTS ---------------- */
+
+function buildElements(services) {
+  const nodesById = new Map();
+  const edges = [];
+  const inbound = new Map();
+  const producers = new Map();
+  const consumers = new Map();
+
+  services.forEach((svc) => {
+    const id = svc.name;
+    if (!id) return;
+
+    if (!nodesById.has(id)) {
+      nodesById.set(id, { data: { id, label: id } });
+    }
+
+    const node = nodesById.get(id);
+    const updatedAt = svc?.metadata?.updatedAt ?? null;
+
+    node.data = {
+      ...node.data,
+      id,
+      label: id,
+      type: svc.contracts?.[0]?.role || 'service',
+      weight: 0,
+      producedEvents: [],
+      consumedEvents: [],
+      updatedAt,
+      ragColor: ragColorFromUpdatedAt(updatedAt),
+    };
+
+    const ensureDep = (name, role) => {
+      if (!nodesById.has(name)) {
+        nodesById.set(name, {
+          data: {
+            id: name,
+            label: name,
+            type: role || 'external',
+            weight: 0,
+            producedEvents: [],
+            consumedEvents: [],
+            ragColor: '#6b7280',
+            updatedAt: null,
+          },
+        });
+      }
+    };
+
+    (svc.dependencies?.critical || []).forEach((dep) => {
+      ensureDep(dep.name, dep.role);
+      edges.push({
+        data: {
+          id: `dep-${id}-${dep.name}-critical`,
+          source: id,
+          target: dep.name,
+          kind: 'dependency',
+          critical: 'true',
+        },
+      });
+      inbound.set(dep.name, (inbound.get(dep.name) || 0) + 1);
+    });
+
+    (svc.dependencies?.['non-critical'] || []).forEach((dep) => {
+      ensureDep(dep.name, dep.role);
+      edges.push({
+        data: {
+          id: `dep-${id}-${dep.name}-noncritical`,
+          source: id,
+          target: dep.name,
+          kind: 'dependency',
+          critical: 'false',
+        },
+      });
+      inbound.set(dep.name, (inbound.get(dep.name) || 0) + 1);
+    });
+
+    (svc.events?.producing || []).forEach((e) => {
+      node.data.producedEvents.push(e.name);
+      if (!producers.has(e.name)) producers.set(e.name, new Set());
+      producers.get(e.name).add(id);
+    });
+
+    (svc.events?.consuming || []).forEach((e) => {
+      node.data.consumedEvents.push(e.name);
+      if (!consumers.has(e.name)) consumers.set(e.name, new Set());
+      consumers.get(e.name).add(id);
+    });
+  });
+
+  [...new Set([...producers.keys(), ...consumers.keys()])].forEach((event) => {
+    [...(producers.get(event) || [])].forEach((p) => {
+      [...(consumers.get(event) || [])].forEach((c) => {
+        if (p !== c) {
+          edges.push({
+            data: {
+              id: `evt-${event}-${p}-${c}`,
+              source: p,
+              target: c,
+              kind: 'event',
+              eventName: event,
+            },
+          });
+        }
+      });
+    });
+  });
+
+  let maxWeight = 0;
+  nodesById.forEach((n, id) => {
+    const w = inbound.get(id) || 0;
+    n.data.weight = w;
+    maxWeight = Math.max(maxWeight, w);
+  });
+
+  return {
+    elements: [...nodesById.values(), ...edges],
+    nodes: [...nodesById.values()],
+    edges,
+    maxWeight,
+    allEvents: [...producers.keys(), ...consumers.keys()].sort(),
+    allServices: [...nodesById.keys()].sort(),
+  };
+}
+
+/* ---------------- COMPONENT ---------------- */
+
+export default function ServiceGraph() {
+  const {
+    elements,
+    nodes,
+    edges,
+    maxWeight,
+    allEvents,
+    allServices,
+  } = useMemo(() => buildElements(services), []);
+
+  const [selectedEvent, setSelectedEvent] = useState(ALL_EVENTS);
+  const [selectedServiceFilter, setSelectedServiceFilter] = useState(ALL_SERVICES);
+  const [showDependencies, setShowDependencies] = useState(true);
+  const [showEvents, setShowEvents] = useState(true);
+  const [selectedNodeId, setSelectedNodeId] = useState(null);
+  const [positions, setPositions] = useState({});
+  const [layoutReady, setLayoutReady] = useState(false);
+  const cyRef = useRef(null);
+  const didLayoutRef = useRef(false);
+
+  /* ---------- HEADLESS LAYOUT (NO FLICKER) ---------- */
+  useEffect(() => {
+    if (layoutReady || didLayoutRef.current) return;
+    didLayoutRef.current = true;
+
+    const cy = cytoscape({ headless: true, elements });
+    cy.layout({ name: 'cose', animate: false }).run();
+
+    const pos = {};
+    cy.nodes().forEach((n) => {
+      pos[n.id()] = { x: n.position('x'), y: n.position('y') };
+    });
+
+    cy.destroy();
+    setPositions(pos);
+    setLayoutReady(true);
+  }, [elements, layoutReady]);
+
+  /* ---------- TOP 5 LISTS ---------- */
+
+  const topByConsumers = useMemo(() => {
+    const map = new Map();
+    edges.forEach((e) => {
+      if (e.data.kind !== 'event') return;
+      if (!map.has(e.data.source)) map.set(e.data.source, new Set());
+      map.get(e.data.source).add(e.data.target);
+    });
+    return [...map.entries()]
+      .map(([id, s]) => ({ id, count: s.size }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  }, [edges]);
+
+  const topByOldestUpdate = useMemo(() => {
+    return nodes
+      .map((n) => ({
+        id: n.data.id,
+        daysAgo: daysSince(n.data.updatedAt),
+      }))
+      .filter((n) => Number.isFinite(n.daysAgo))
+      .sort((a, b) => b.daysAgo - a.daysAgo)
+      .slice(0, 5);
+  }, [nodes]);
+
+  /* ---------- FILTERED ELEMENTS ---------- */
+
+  const filteredElements = useMemo(() => {
+    const allowed = new Set(nodes.map((n) => n.data.id));
+
+    const visibleNodes = nodes.filter((n) => allowed.has(n.data.id));
+    const visibleEdges = edges.filter((e) => {
+      if (!showDependencies && e.data.kind === 'dependency') return false;
+      if (!showEvents && e.data.kind === 'event') return false;
+      return true;
+    });
+
+    return [...visibleNodes, ...visibleEdges].map((el) => {
+      if (positions[el.data.id]) el.position = positions[el.data.id];
+      return el;
+    });
+  }, [nodes, edges, positions, showDependencies, showEvents]);
+
+  /* ---------- STYLES ---------- */
+
+  const stylesheet = [
+    {
+      selector: 'node',
+      style: {
+        'background-color': 'data(ragColor)',
+        label: 'data(label)',
+        color: '#e5e7eb',
+        'font-size': 10,
+        'text-valign': 'center',
+        'text-halign': 'center',
+        width: (n) =>
+          40 + ((n.data('weight') || 0) / (maxWeight || 1)) * 70,
+        height: (n) =>
+          40 + ((n.data('weight') || 0) / (maxWeight || 1)) * 70,
+      },
+    },
+    { selector: 'edge[kind="event"]', style: { 'line-style': 'dotted' } },
+  ];
+
+  /* ---------------- RENDER ---------------- */
+
+  return (
+    <div style={{ display: 'flex', height: '100vh', background: '#020617', color: '#e5e7eb' }}>
+      {/* LEFT PANEL */}
+      <div style={{ width: 260, padding: 12 }}>
+        <h3>Top 5 Consumers</h3>
+        <ol>
+          {topByConsumers.map((s) => (
+            <li key={s.id} onClick={() => setSelectedNodeId(s.id)}>
+              {s.id} ({s.count})
+            </li>
+          ))}
+        </ol>
+
+        <h3>Oldest Updated</h3>
+        <ol>
+          {topByOldestUpdate.map((s) => (
+            <li key={s.id} onClick={() => setSelectedNodeId(s.id)}>
+              {s.id} – {s.daysAgo} days
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      {/* GRAPH */}
+      <div style={{ flex: 1 }}>
+        {layoutReady && (
+          <CytoscapeView
+            elements={filteredElements}
+            layout={{ name: 'preset' }}
+            stylesheet={stylesheet}
+            onReady={(cy) => (cyRef.current = cy)}
+          />
+        )}
+      </div>
+    </div>
+  );
+}

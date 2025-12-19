@@ -1,0 +1,747 @@
+[
+  {
+    "name": "learner-profile-service",
+    "owner": "team-learner@company.com",
+    "documentation": "",
+    "vision": "Stores and exposes learner profiles and preferences.",
+    "repo": "https://github.com/company/learner-profile-service",
+    "domain": "learner",
+    "team": "learner",
+    "contracts": [
+      {
+        "role": "learner-api",
+        "protocol": "http"
+      }
+    ],
+    "dependencies": {
+      "critical": [
+        {
+          "name": "auth-service",
+          "role": "authentication",
+          "protocol": "http"
+        }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "producing": [
+        {
+          "name": "BadgeAwarded",
+          "description": "Emitted when a learner is granted a new badge."
+        }
+      ],
+      "consuming": [
+        {
+          "name": "NotificationDispatched",
+          "description": "Emitted when a notification is successfully sent."
+        }
+      ]
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0",
+      "createdAt": "2025-12-15"
+    }
+  },
+  {
+    "name": "progress-tracking-service",
+    "owner": "team-learner@company.com",
+    "documentation": "",
+    "vision": "Tracks learner progress across courses and modules.",
+    "repo": "https://github.com/company/progress-tracking-service",
+    "domain": "learner",
+    "team": "learner",
+    "contracts": [
+      {
+        "role": "progress-api",
+        "protocol": "http"
+      }
+    ],
+    "dependencies": {
+      "critical": [
+        {
+          "name": "learner-profile-service",
+          "role": "learner-api",
+          "protocol": "http"
+        }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "producing": [
+        {
+          "name": "ReportGenerated",
+          "description": "Emitted when a scheduled or on-demand report completes."
+        }
+      ],
+      "consuming": [
+        {
+          "name": "LearningActivityRecorded",
+          "description": "Updates learner progression and last-activity timestamps."
+        }
+      ]
+    },
+    "metadata": {
+      "updatedAt": "2025-09-15",
+      "version": "1.0.0",
+      "createdAt": "2025-12-15"
+    }
+  },
+  {
+    "name": "notification-center-service",
+    "owner": "team-engagement@company.com",
+    "documentation": "",
+    "vision": "Sends in-app and push notifications to learners and employers.",
+    "repo": "https://github.com/company/notification-center-service",
+    "domain": "engagement",
+    "team": "engagement",
+    "contracts": [
+      {
+        "role": "notification-api",
+        "protocol": "http"
+      }
+    ],
+    "dependencies": {
+      "critical": [],
+      "non-critical": [
+        {
+          "name": "learner-profile-service",
+          "role": "learner-api",
+          "protocol": "http"
+        }
+      ]
+    },
+    "events": {
+      "producing": [
+        {
+          "name": "ProgressMilestoneReached",
+          "description": "Emitted when a learner hits a key progress milestone."
+        }
+      ],
+      "consuming": [
+        {
+          "name": "PaymentStatusChanged",
+          "description": "Emitted when an invoice or payment changes status."
+        }
+      ]
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0",
+      "createdAt": "2025-12-15"
+    }
+  },
+  {
+    "name": "reporting-aggregator-service",
+    "owner": "team-reporting@company.com",
+    "documentation": "",
+    "vision": "Aggregates data from multiple sources for dashboards and exports.",
+    "repo": "https://github.com/company/reporting-aggregator-service",
+    "domain": "reporting",
+    "team": "reporting",
+    "contracts": [
+      {
+        "role": "reporting-api",
+        "protocol": "http"
+      }
+    ],
+    "dependencies": {
+      "critical": [
+        {
+          "name": "progress-tracking-service",
+          "role": "progress-api",
+          "protocol": "http"
+        },
+        {
+          "name": "learner-profile-service",
+          "role": "learner-api",
+          "protocol": "http"
+        },
+        {
+          "name": "analytics-pipeline-service",
+          "role": "analytics-api",
+          "protocol": "http"
+        },
+        {
+          "name": "payment-billing-service",
+          "role": "billing-api",
+          "protocol": "http"
+        },
+        {
+          "name": "content-catalog-service",
+          "role": "catalog-api",
+          "protocol": "http"
+        }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "producing": [
+        {
+          "name": "BadgeAwarded",
+          "description": "Emitted when a learner is granted a new badge."
+        }
+      ],
+      "consuming": [
+        {
+          "name": "RecommendationsGenerated",
+          "description": "Emitted when a new recommendation set is produced."
+        }
+      ]
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0",
+      "createdAt": "2025-12-15"
+    }
+  },
+  {
+    "name": "compliance-audit-service",
+    "owner": "team-compliance@company.com",
+    "documentation": "",
+    "vision": "Maintains audit trails and compliance evidence for regulated learning.",
+    "repo": "https://github.com/company/compliance-audit-service",
+    "domain": "compliance",
+    "team": "compliance",
+    "contracts": [
+      {
+        "role": "audit-log-api",
+        "protocol": "http"
+      }
+    ],
+    "dependencies": {
+      "critical": [],
+      "non-critical": [
+        {
+          "name": "auth-service",
+          "role": "authentication",
+          "protocol": "http"
+        }
+      ]
+    },
+    "events": {
+      "producing": [],
+      "consuming": [
+        {
+          "name": "ProgressMilestoneReached",
+          "description": "Emitted when a learner hits a key progress milestone."
+        }
+      ]
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0",
+      "createdAt": "2025-12-15"
+    }
+  },
+  {
+    "name": "recommendation-engine-service",
+    "owner": "team-insights@company.com",
+    "documentation": "",
+    "vision": "Recommends next-best learning content based on behaviour.",
+    "repo": "https://github.com/company/recommendation-engine-service",
+    "domain": "insights",
+    "team": "insights",
+    "contracts": [
+      {
+        "role": "recommendation-api",
+        "protocol": "http"
+      }
+    ],
+    "dependencies": {
+      "critical": [
+        {
+          "name": "content-catalog-service",
+          "role": "catalog-api",
+          "protocol": "http"
+        }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "producing": [
+        {
+          "name": "RecommendationsGenerated",
+          "description": "Emitted when a new recommendation set is produced."
+        }
+      ],
+      "consuming": [
+        {
+          "name": "ProgressMilestoneReached",
+          "description": "Emitted when a learner hits a key progress milestone."
+        }
+      ]
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0",
+      "createdAt": "2025-12-15"
+    }
+  },
+  {
+    "name": "search-indexer-service",
+    "owner": "team-insights@company.com",
+    "documentation": "",
+    "vision": "Indexes learning content and activity for fast discovery.",
+    "repo": "https://github.com/company/search-indexer-service",
+    "domain": "insights",
+    "team": "insights",
+    "contracts": [
+      {
+        "role": "indexer-api",
+        "protocol": "http"
+      }
+    ],
+    "dependencies": {
+      "critical": [
+        {
+          "name": "content-catalog-service",
+          "role": "catalog-api",
+          "protocol": "http"
+        }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "producing": [],
+      "consuming": [
+        {
+          "name": "NotificationDispatched",
+          "description": "Emitted when a notification is successfully sent."
+        }
+      ]
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0",
+      "createdAt": "2025-12-15"
+    }
+  },
+  {
+    "name": "badge-awards-service",
+    "owner": "team-engagement@company.com",
+    "documentation": "",
+    "vision": "Awards badges and achievements based on learner activity.",
+    "repo": "https://github.com/company/badge-awards-service",
+    "domain": "engagement",
+    "team": "engagement",
+    "contracts": [
+      {
+        "role": "badging-api",
+        "protocol": "http"
+      }
+    ],
+    "dependencies": {
+      "critical": [
+        {
+          "name": "progress-tracking-service",
+          "role": "progress-api",
+          "protocol": "http"
+        }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "producing": [
+        {
+          "name": "PaymentStatusChanged",
+          "description": "Emitted when an invoice or payment changes status."
+        }
+      ],
+      "consuming": [
+        {
+          "name": "LearnerProfileUpdated",
+          "description": "Emitted when core learner details or preferences change."
+        }
+      ]
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0",
+      "createdAt": "2025-12-15"
+    }
+  },
+  {
+    "name": "learning-path-service",
+    "owner": "team-learner@company.com",
+    "documentation": "",
+    "vision": "Manages structured learning paths and their completion rules.",
+    "repo": "https://github.com/company/learning-path-service",
+    "domain": "learner",
+    "team": "learner",
+    "contracts": [
+      {
+        "role": "learning-path-api",
+        "protocol": "http"
+      }
+    ],
+    "dependencies": {
+      "critical": [
+        {
+          "name": "content-catalog-service",
+          "role": "catalog-api",
+          "protocol": "http"
+        }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "producing": [
+        {
+          "name": "LearnerProfileUpdated",
+          "description": "Emitted when core learner details or preferences change."
+        }
+      ],
+      "consuming": [
+        {
+          "name": "ReportGenerated",
+          "description": "Emitted when a scheduled or on-demand report completes."
+        }
+      ]
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0",
+      "createdAt": "2025-12-15"
+    }
+  },
+  {
+    "name": "mobile-gateway-service",
+    "owner": "team-platform@company.com",
+    "documentation": "",
+    "vision": "Optimised API gateway for mobile and tablet clients.",
+    "repo": "https://github.com/company/mobile-gateway-service",
+    "domain": "platform",
+    "team": "platform",
+    "contracts": [
+      {
+        "role": "edge-proxy",
+        "protocol": "http"
+      }
+    ],
+    "dependencies": {
+      "critical": [
+        {
+          "name": "auth-service",
+          "role": "authentication",
+          "protocol": "http"
+        },
+        {
+          "name": "learner-profile-service",
+          "role": "learner-api",
+          "protocol": "http"
+        }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "producing": [
+        {
+          "name": "NotificationDispatched",
+          "description": "Emitted when a notification is successfully sent."
+        }
+      ],
+      "consuming": [
+        {
+          "name": "ProgressMilestoneReached",
+          "description": "Emitted when a learner hits a key progress milestone."
+        }
+      ]
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0",
+      "createdAt": "2025-12-15"
+    }
+  },
+  {
+    "name": "auth-service",
+    "owner": "team-security@company.com",
+    "documentation": "",
+    "vision": "Handles authentication, tokens and single sign-on.",
+    "repo": "https://github.com/company/auth-service",
+    "domain": "security",
+    "team": "security",
+    "contracts": [
+      {
+        "role": "authentication",
+        "protocol": "http"
+      }
+    ],
+    "dependencies": {
+      "critical": [],
+      "non-critical": []
+    },
+    "events": {
+      "producing": [],
+      "consuming": []
+    },
+    "metadata": {
+      "updatedAt": "2024-12-10",
+      "version": "1.0.0",
+      "createdAt": "2025-12-15"
+    }
+  },
+  {
+    "name": "content-catalog-service",
+    "owner": "team-content@company.com",
+    "documentation": "",
+    "vision": "Stores and serves metadata for all learning content.",
+    "repo": "https://github.com/company/content-catalog-service",
+    "domain": "content",
+    "team": "content",
+    "contracts": [
+      {
+        "role": "catalog-api",
+        "protocol": "http"
+      }
+    ],
+    "dependencies": {
+      "critical": [],
+      "non-critical": []
+    },
+    "events": {
+      "producing": [],
+      "consuming": []
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0",
+      "createdAt": "2025-12-15"
+    }
+  },
+  {
+    "name": "payment-billing-service",
+    "owner": "team-billing@company.com",
+    "documentation": "",
+    "vision": "Handles invoicing, refunds and payment status.",
+    "repo": "https://github.com/company/payment-billing-service",
+    "domain": "billing",
+    "team": "billing",
+    "contracts": [
+      {
+        "role": "billing-api",
+        "protocol": "http"
+      }
+    ],
+    "dependencies": {
+      "critical": [
+        {
+          "name": "auth-service",
+          "role": "authentication",
+          "protocol": "http"
+        }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "producing": [
+        {
+          "name": "LearningActivityRecorded",
+          "description": "Updates learner progression and last-activity timestamps."
+        }
+      ],
+      "consuming": []
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0",
+      "createdAt": "2025-12-15"
+    }
+  },
+  {
+    "name": "organisation-directory-service",
+    "owner": "team-employer@company.com",
+    "documentation": "",
+    "vision": "Stores employers, providers and organisational relationships.",
+    "repo": "https://github.com/company/organisation-directory-service",
+    "domain": "employer",
+    "team": "employer",
+    "contracts": [
+      {
+        "role": "organisation-api",
+        "protocol": "http"
+      }
+    ],
+    "dependencies": {
+      "critical": [],
+      "non-critical": []
+    },
+    "events": {
+      "producing": [],
+      "consuming": []
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0",
+      "createdAt": "2025-12-15"
+    }
+  },
+  {
+    "name": "tutor-portal-service",
+    "owner": "team-tutor@company.com",
+    "documentation": "",
+    "vision": "Provides UI and APIs for tutors to manage cohorts.",
+    "repo": "https://github.com/company/tutor-portal-service",
+    "domain": "tutor",
+    "team": "tutor",
+    "contracts": [
+      {
+        "role": "tutor-portal-api",
+        "protocol": "http"
+      }
+    ],
+    "dependencies": {
+      "critical": [
+        {
+          "name": "learner-profile-service",
+          "role": "learner-api",
+          "protocol": "http"
+        },
+        {
+          "name": "organisation-directory-service",
+          "role": "organisation-api",
+          "protocol": "http"
+        }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "producing": [],
+      "consuming": []
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0",
+      "createdAt": "2025-12-15"
+    }
+  },
+  {
+    "name": "employer-portal-service",
+    "owner": "team-employer@company.com",
+    "documentation": "",
+    "vision": "Front door for employers to review progress and manage learners.",
+    "repo": "https://github.com/company/employer-portal-service",
+    "domain": "employer",
+    "team": "employer",
+    "contracts": [
+      {
+        "role": "employer-portal-api",
+        "protocol": "http"
+      }
+    ],
+    "dependencies": {
+      "critical": [
+        {
+          "name": "organisation-directory-service",
+          "role": "organisation-api",
+          "protocol": "http"
+        },
+        {
+          "name": "reporting-aggregator-service",
+          "role": "reporting-api",
+          "protocol": "http"
+        }
+      ],
+      "non-critical": []
+    },
+    "events": {
+      "producing": [],
+      "consuming": []
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0",
+      "createdAt": "2025-12-15"
+    }
+  },
+  {
+    "name": "file-storage-service",
+    "owner": "team-platform@company.com",
+    "documentation": "",
+    "vision": "Stores and serves user-generated and system files.",
+    "repo": "https://github.com/company/file-storage-service",
+    "domain": "platform",
+    "team": "platform",
+    "contracts": [
+      {
+        "role": "file-storage-api",
+        "protocol": "http"
+      }
+    ],
+    "dependencies": {
+      "critical": [],
+      "non-critical": []
+    },
+    "events": {
+      "producing": [],
+      "consuming": []
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0",
+      "createdAt": "2025-12-15"
+    }
+  },
+  {
+    "name": "analytics-pipeline-service",
+    "owner": "team-insights@company.com",
+    "documentation": "",
+    "vision": "Transforms raw activity into analytical datasets.",
+    "repo": "https://github.com/company/analytics-pipeline-service",
+    "domain": "insights",
+    "team": "insights",
+    "contracts": [
+      {
+        "role": "analytics-api",
+        "protocol": "http"
+      }
+    ],
+    "dependencies": {
+      "critical": [],
+      "non-critical": []
+    },
+    "events": {
+      "producing": [],
+      "consuming": [
+        {
+          "name": "PaymentStatusChanged",
+          "description": "Emitted when an invoice or payment changes status."
+        }
+      ]
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0",
+      "createdAt": "2025-12-15"
+    }
+  },
+  {
+    "name": "feature-flag-service",
+    "owner": "team-platform@company.com",
+    "documentation": "",
+    "vision": "Provides runtime feature toggles and configuration.",
+    "repo": "https://github.com/company/feature-flag-service",
+    "domain": "platform",
+    "team": "platform",
+    "contracts": [
+      {
+        "role": "config-api",
+        "protocol": "http"
+      }
+    ],
+    "dependencies": {
+      "critical": [],
+      "non-critical": []
+    },
+    "events": {
+      "producing": [],
+      "consuming": []
+    },
+    "metadata": {
+      "updatedAt": "2025-12-15",
+      "version": "1.0.0",
+      "createdAt": "2025-12-15"
+    }
+  }
+]
