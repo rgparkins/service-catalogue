@@ -4,7 +4,6 @@ A lightweight in-memory service catalogue API and tooling for managing metadata 
 
 This project includes:
 	•	A Node.js/Express API for CRUD operations on services
-	•	Schema validation using Zod
 	•	A RESTful interface supporting creation, replacement (PUT), listing, and deletion
 	•	Metadata (created/updated/version) entirely managed by the server
 
