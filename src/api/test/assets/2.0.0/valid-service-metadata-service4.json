@@ -1,0 +1,46 @@
+{
+  "name": "domainb.service4",
+  "owner": "another@domain.com",
+  "vision": "To perform a service",
+  "repo": "https://github.com/acompanyname/eng.service71",
+  "runbook": "https://acompany.atlassian.net/wiki/spaces/ON/pages/324234/runbook",
+  "team": "Pet",
+  "contracts": [{
+    "role":"api",
+    "protocol":"http"
+  }],
+  "format": "json",
+  "dependencies": {
+    "critical": [
+      {
+        "name": "domainb.service88",
+        "role": "api",
+        "protocol": "http"
+      }
+    ],
+    "non-critical": [
+      {
+        "name": "engineering.test",
+        "role": "api",
+        "protocol": "http"
+      },
+      {
+        "name": "product.legacy-enquiries",
+        "role": "api",
+        "protocol": "http"
+      },
+      {
+        "name": "domainb.legacy-enquiries",
+        "role": "api",
+        "protocol": "http"
+      }
+    ]
+  },
+  "events": [],
+  "metrics": {
+    "emits": [
+      "quoting_bearer_token"
+    ],
+    "receiver": "domainb"
+  }
+}

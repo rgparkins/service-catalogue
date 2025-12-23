@@ -1,0 +1,23 @@
+{
+  "name": "engineering.service-cataoogue-api",
+  "version": "2.0.0",
+  "private": true,
+  "description": "The new Service Catalogue API that allows teams to push and validate their service metadata",
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "type": "module",
+  "dependencies": {
+    "ajv": "^6.10.2",
+    "cookie-parser": "~1.4.4",
+    "cors": "^2.8.5",
+    "debug": "~2.6.9",
+    "express": "~4.16.1",
+    "http-errors": "~1.6.3",
+    "mongodb": "^3.6.3",
+    "morgan": "~1.9.1",
+    "node-fetch": "^2.6.1",
+    "node-schedule": "^2.0.0",
+    "underscore": "^1.10.2"
+  }
+}

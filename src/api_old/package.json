@@ -1,0 +1,26 @@
+{
+  "name": "service-catalog-api",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+     "dev": "node server.js"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "cookie-parser": "~1.4.7",
+    "cors": "^2.8.5",
+    "debug": "~4.4.3",
+    "express": "~5.2.1",
+    "http-errors": "~2.0.1",
+    "mongodb": "^7.0.0",
+    "morgan": "~1.10.1",
+    "node-fetch": "^3.3.2",
+    "node-schedule": "^2.1.1",
+    "underscore": "^1.13.7"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0",
+    "supertest": "^7.1.4"
+  }
+}

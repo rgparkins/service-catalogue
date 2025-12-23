@@ -1,0 +1,55 @@
+{
+  "properties": {
+    "projectKey": "=7b668a65828f97c79a2f579ffec8b36cbf2d1a5",
+    "projectName": "Test App",
+    "projectVersion": 1,
+    "sources": ".",
+    "exclusions": "node_modules/**,features/**,deployment/**,test/**,tests/**"
+  },
+  "qualitygate": {
+    "conditions": [
+      {
+        "metric": "new_coverage",
+        "op": "LT",
+        "warning": "85",
+        "error": "75"
+      },
+      {
+        "metric": "new_bugs",
+        "op": "GT",
+        "warning": "",
+        "error": "0"
+      },
+      {
+        "metric": "new_vulnerabilities",
+        "op": "GT",
+        "warning": "",
+        "error": "3"
+      },
+      {
+        "metric": "new_blocker_violations",
+        "op": "GT",
+        "warning": "",
+        "error": "0"
+      },
+      {
+        "metric": "new_major_violations",
+        "op": "GT",
+        "warning": "",
+        "error": "10"
+      },
+      {
+        "metric": "new_code_smells",
+        "op": "GT",
+        "warning": "",
+        "error": "10"
+      },
+      {
+        "metric": "code_smells",
+        "op": "GT",
+        "warning": "",
+        "error": "50"
+      }
+    ]
+  }
+}

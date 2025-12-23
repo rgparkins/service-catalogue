@@ -1,0 +1,299 @@
+openapi: 3.0.0
+
+info:
+  description: This is the service catalogue API for updating and querying the current service catalogue
+  version: "1.0.0"
+  title: Service Catalogue API
+  contact:
+    email: richard.parkins@bglgroup.co.uk
+
+paths:
+  /:
+    get:
+      summary: Fetches the latest list of schemas, versions etc
+      operationId: fetchInfo
+      description: |
+        Fetches latest information on the system
+      responses:
+        '200':
+          description: The latest json schema
+          content:
+            application/json:
+              schema:
+                type: object
+  /reference/teams:
+    get:
+      summary: Fetches the latest list of teams
+      operationId: fetchTeams
+      description: |
+        Fetches latest teams on the system
+      responses:
+        '200':
+          description: The latest json schema
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/TeamItem'
+  /reference/pillars:
+    get:
+      summary: Fetches the latest list of pillars
+      operationId: fetchPillars
+      description: |
+        Fetches latest pillars on the system
+      responses:
+        '200':
+          description: The latest json schema
+          content:
+            application/json:
+              schema:
+                type: object
+                description: an object who keys are the pillar and values the teams under that pillar
+                items:
+                  $ref: '#/components/schemas/PillarItem'
+  /metadata/schema:
+    get:
+      summary: Fetches the latest metadata schema
+      operationId: fetchMetadataSchema
+      description: |
+        Fetches latest schema on the system
+      parameters:
+        - name: team
+          in: query
+          required: false
+          description: return only services belonging to a specific team
+          example: Pet, Home, Van
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The latest json schema
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /metadata/validate:
+    post:
+      summary: Validates the payload against the latest schema on the system
+      operationId: validateSchema
+      description: Validate the json payload
+      responses:
+        '200':
+          description: Metadata conforms to the latest schema
+        '202':
+          description: Metadata conforms to a previous schema
+        '400':
+          description: failures
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /metadata/validate/:version:
+    post:
+      summary: Validates the payload against the version of the schema specified
+      operationId: validateSchemaByVersion
+      description: Validate the json payload
+      responses:
+        '200':
+          description: Metadata conforms to the latest schema
+        '400':
+          description: failures
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: version does not exist
+  /services:
+    get:
+      summary: Fetches simplified view of services as a list of service names
+      operationId: fetchServices
+      description: Fetches simplified view of services as a list of service names
+      parameters:
+        - name: pillar
+          description: filter by the pillar
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: team
+          description: filter by the team
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: repo
+          description: filter by the repo
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: depends_on
+          description: filter by dependency by partial match
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Array of string
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /services/metadata:
+    get:
+      summary: Fetches all the sanitised metadata currently stored on the system
+      operationId: fetchMetadata
+      description: Fetches all the metadata currently stored on the system
+      parameters:
+        - name: pillar
+          description: filter by the pillar
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: team
+          description: filter by the team
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: repo
+          description: filter by the repo
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Array of metadata
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MetadataItem'
+
+  /services/metadata/:serviceName:
+    post:
+      summary: Will refresh data on this service if valid
+      operationId: updateMetadataByService
+      description: |
+        refreshes the metadata for this service
+      parameters:
+        - name: serviceName
+          description: the service name to fetch
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: created
+        '202':
+          description: accepted - it conforms to a previous version of the schema
+
+    delete:
+      summary: Will decommision the service detailed.
+      operationId: decommissionByService
+      description: |
+        deommissions the metadata for this service
+      parameters:
+        - name: serviceName
+          description: the service name to fetch
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: deleted
+        '404':
+          description: this resource does not exist
+        '500':
+          description: process errored
+
+    get:
+      summary: Fetches all the metadata currently stored on the system
+      operationId: fetchMetadataByService
+      description: |
+        Fetches metadata for the defined service
+      parameters:
+        - name: serviceName
+          description: the service name to fetch
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: the matched repo metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetadataItem'
+        '404':
+          description: repo not found
+
+  /services/decommissioned:
+    get:
+      summary: Fetches all the decommisioned metadata currently stored on the system
+      operationId: fetchMetadata
+      description: Fetches all the decommisionedmetadata currently stored on the system
+      responses:
+        '200':
+          description: Array of metadata
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MetadataItem'
+
+  /services/metadata/:serviceName/history:
+    get:
+      summary: Fetches all the metadata currently stored on the system
+      operationId: fetchHistoryMetadataByService
+      description: |
+        Fetches metadata for the defined service
+      parameters:
+        - name: serviceName
+          description: the service name to fetch
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: the matched repo metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetadataItem'
+        '404':
+          description: repo not found
+
+components:
+
+  schemas:
+
+    MetadataItem:
+      type: object
+
+    TeamItem:
+      type: object
+      properties:
+        name:
+          type: string
+        pillar:
+          type: string
+
+    PillarItem:
+      type: object
