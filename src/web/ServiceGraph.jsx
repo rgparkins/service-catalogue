@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import CytoscapeView from './CytoscapeView.jsx';
-import services from './service-metadata.json';
+import localServices from './service-metadata.json';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -187,10 +187,91 @@ const ALL_EVENTS = 'ALL_EVENTS';
 const ALL_SERVICES = 'ALL_SERVICES';
 
 export default function ServiceGraph() {
+  // servicesData comes from either local file or remote URL (if provided by env).
+  // Runtime override (localStorage / query / window prop) is supported so users
+  // can point the running app at a different metadata URL without rebuilding.
+  const getInitialRuntimeUrl = () => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const stored = localStorage.getItem('SERVICE_METADATA_URL');
+      if (stored) return stored;
+      if (window.__SERVICE_METADATA_URL) return window.__SERVICE_METADATA_URL;
+      const qp = new URLSearchParams(window.location.search).get('metadata_url');
+      if (qp) return qp;
+    } catch (e) {
+      // ignore
+    }
+    return null;
+  };
+
+  const [servicesData, setServicesData] = useState(localServices);
+  const [dataSource, setDataSource] = useState('local'); // 'local' or 'remote'
+  const [fetchError, setFetchError] = useState(null);
+  const [runtimeUrl, setRuntimeUrl] = useState(getInitialRuntimeUrl);
+  const [runtimeInput, setRuntimeInput] = useState(runtimeUrl || '');
+
+  // Recompute graph elements when services data changes
   const { elements, maxWeight, allEvents, allServices } = useMemo(
-    () => buildElements(services),
-    []
+    () => buildElements(servicesData),
+    [servicesData]
   );
+
+  // Fetch remote metadata if Vite env var is provided
+  const fetchRemote = async (urlOverride) => {
+    const url = urlOverride || runtimeUrl || import.meta.env.VITE_SERVICE_METADATA_URL;
+    if (!url) return;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 7000);
+
+    try {
+      const res = await fetch(url, { signal: controller.signal });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      if (!Array.isArray(json)) throw new Error('expected JSON array');
+      setServicesData(json);
+      setDataSource('remote');
+      setFetchError(null);
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        setFetchError('Request timed out');
+      } else {
+        setFetchError(String(err.message || err));
+      }
+      // keep local services as fallback
+      setDataSource('local');
+    } finally {
+      clearTimeout(timeout);
+    }
+  };
+
+  const applyRuntimeUrl = (url) => {
+    try {
+      if (!url) return;
+      localStorage.setItem('SERVICE_METADATA_URL', url);
+      setRuntimeUrl(url);
+      setRuntimeInput(url);
+      fetchRemote(url);
+    } catch (e) {
+      console.warn('Unable to persist runtime URL', e);
+    }
+  };
+
+  const clearRuntimeUrl = () => {
+    try {
+      localStorage.removeItem('SERVICE_METADATA_URL');
+    } catch (e) {}
+    setRuntimeUrl(null);
+    setRuntimeInput('');
+    // try fetching from env (or fallback to local)
+    fetchRemote();
+  };
+
+  useEffect(() => {
+    // try fetching once at mount
+    fetchRemote();
+  }, []);
+
 
   const [selectedEvent, setSelectedEvent] = useState(ALL_EVENTS);
   const [selectedServiceFilter, setSelectedServiceFilter] =
@@ -210,11 +291,11 @@ export default function ServiceGraph() {
   // Map id -> full service metadata
   const serviceById = useMemo(() => {
     const map = new Map();
-    services.forEach((svc) => {
+    servicesData.forEach((svc) => {
       if (svc.name) map.set(svc.name, svc);
     });
     return map;
-  }, []);
+  }, [servicesData]);
 
   // Split elements into nodes/edges
   const nodes = useMemo(
@@ -656,6 +737,100 @@ export default function ServiceGraph() {
       >
         <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>
           Filters
+        </div>
+
+        <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 8 }}>
+          Data: <strong style={{ color: dataSource === 'remote' ? '#34d399' : '#9ca3af' }}>{dataSource}</strong>
+
+          <div style={{ marginTop: 6 }}>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 6 }}>
+              Runtime override (optional)
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                placeholder="https://example.com/service-metadata.json"
+                value={runtimeInput}
+                onChange={(e) => setRuntimeInput(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '6px 8px',
+                  borderRadius: 6,
+                  border: '1px solid #374151',
+                  background: '#020617',
+                  color: '#e5e7eb',
+                  fontSize: 12,
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') applyRuntimeUrl(runtimeInput);
+                }}
+              />
+
+              <button
+                onClick={() => applyRuntimeUrl(runtimeInput)}
+                style={{
+                  fontSize: 12,
+                  padding: '6px 8px',
+                  borderRadius: 6,
+                  border: '1px solid #374151',
+                  background: '#111827',
+                  color: '#e5e7eb',
+                }}
+                disabled={!runtimeInput}
+              >
+                Use
+              </button>
+
+              <button
+                onClick={() => clearRuntimeUrl()}
+                style={{
+                  fontSize: 12,
+                  padding: '6px 8px',
+                  borderRadius: 6,
+                  border: '1px solid #374151',
+                  background: '#111827',
+                  color: '#e5e7eb',
+                }}
+                disabled={!runtimeUrl}
+              >
+                Clear
+              </button>
+
+              <button
+                onClick={() => fetchRemote()}
+                style={{
+                  fontSize: 12,
+                  padding: '6px 8px',
+                  borderRadius: 6,
+                  border: '1px solid #374151',
+                  background: '#111827',
+                  color: '#e5e7eb',
+                }}
+              >
+                Refresh
+              </button>
+            </div>
+
+            <div style={{ marginTop: 6, fontSize: 11, color: '#9ca3af' }}>
+              {runtimeUrl ? (
+                <div>
+                  <strong style={{ color: '#34d399' }}>Runtime:</strong>{' '}
+                  <span style={{ wordBreak: 'break-all' }}>{runtimeUrl}</span>
+                </div>
+              ) : import.meta.env.VITE_SERVICE_METADATA_URL ? (
+                <div>
+                  <strong>Env:</strong>{' '}
+                  <span style={{ wordBreak: 'break-all' }}>{import.meta.env.VITE_SERVICE_METADATA_URL}</span>
+                </div>
+              ) : (
+                <div>Using local bundled file</div>
+              )}
+            </div>
+
+            {fetchError ? (
+              <div style={{ marginTop: 6, color: '#f87171', fontSize: 11 }}>{fetchError}</div>
+            ) : null}
+          </div>
         </div>
 
         {/* Event filter */}

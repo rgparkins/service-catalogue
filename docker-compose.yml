@@ -43,6 +43,7 @@ services:
       - "5173:5173"
     environment:
       - NODE_ENV=development
+      - VITE_SERVICE_METADATA_URL=${SERVICE_METADATA_URL}
     networks:
       - test-network
     depends_on:
