@@ -3,16 +3,15 @@ services:
   app:
     container_name: app
     build:
-      context: app/
+      context: ./src/api/app
     networks:
       test-network:
     environment:
       MONGODB_ATLAS_URI: mongodb://mongodb:27017
     depends_on:
-    - mongodb
-    - paas-data-scraper
+      - mongodb
     ports:
-    - 3000:3000
+      - "3000:3000"
   mongodb:
     image: mongo:latest
     container_name: mongodb
@@ -21,28 +20,17 @@ services:
     networks:
       test-network:
     ports:
-    - 27017:27017
-  paas-data-scraper:
-    image: rgparkins/rest-stub:latest
-    container_name: paas
-    volumes:
-      - ./test/assets/paas-data-scraper-canned-data:/usr/app/files
-    environment:
-      PORT: 4000
-    networks:
-      test-network:
-    ports:
-    - 8000:4000
+      - "27017:27017"
   test:
     build:
-      context: test/
+      context: ./src/api/test
     environment:
-    - SERVICE_UNDER_TEST_HOSTNAME=app:3000
+      - SERVICE_UNDER_TEST_HOSTNAME=app:3000
     entrypoint: sh -c "ls -la ./features && npm install && ./node_modules/.bin/cucumber-js ./features/**/*.feature --exit"
     networks:
       test-network:
     depends_on:
-    - app
+      - app
 networks:
   test-network:
-    driver: bridge 
+    driver: bridge
