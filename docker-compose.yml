@@ -31,6 +31,22 @@ services:
       test-network:
     depends_on:
       - app
+  web:
+    build:
+      context: ./src/web
+      dockerfile: Dockerfile
+    container_name: web
+    volumes:
+      - ./src/web:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+    networks:
+      - test-network
+    depends_on:
+      - app
 networks:
   test-network:
     driver: bridge
