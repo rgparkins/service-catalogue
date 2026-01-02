@@ -76,6 +76,19 @@ router.get('/metadata', async (req, res) => {
     }
 });
 
+router.get('/info', async (req, res) => {
+    try {
+        let result = await _fetch_services(req, data => {
+            return data;
+        })
+
+        res.json(result.map(d => d.service.metadata));
+    } catch (err) {
+        res.status(500)
+            .send(err);
+    }
+});
+
 router.get('/metadata/:serviceName/history', async (req, res) => {
     try {
         let result = await storage.getMetadataHistory(req.params.serviceName);

@@ -4,11 +4,26 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Launch app",
+      "name": "Launch api",
       "program": "${workspaceFolder}/src/api/app/bin/www",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
-      "skipFiles": ["<node_internals>/**"]
+      "skipFiles": ["<node_internals>/**"],
+      "env":{
+        "MONGODB_ATLAS_URI": "mongodb://localhost:27017"
+      }
+    },
+    {
+      "name": "Debug Vite Dev Server",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "${workspaceFolder}/src/web",
+      "env": {
+        "VITE_SERVICE_METADATA_URL": "http://localhost:3000/services/metadata"
+      },
+      "console": "integratedTerminal"
     }
   ]
 }
