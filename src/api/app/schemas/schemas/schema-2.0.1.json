@@ -86,17 +86,17 @@
       }
     },
     "events": {
-      "description": "A list of events that the service interacts with. Supply an empty array if the service neither consumes nor produces events. A topic and at least one of either consumes or produces must be specified to be a valid array.",
       "type": "object",
       "additionalProperties": false,
+      "required": ["producing", "consuming"],
       "properties": {
         "producing": {
-          "description": "The events the service publishes",
-          "$ref": "#/definitions/eventlist"
+          "type": "array",
+          "items": { "$ref": "#/definitions/event" }
         },
         "consuming": {
-          "description": "The events the service consumes",
-          "$ref": "#/definitions/eventlist"
+          "type": "array",
+          "items": { "$ref": "#/definitions/event" }
         }
       }
     }      
@@ -155,13 +155,6 @@
           "description": "The event description",
           "type": "string"
         }
-      }
-    },
-    "eventlist": {
-      "type": "array",
-      "uniqueItems": true,
-      "items": {
-        "$ref": "#/definitions/event"
       }
     },
     "dependency": {
