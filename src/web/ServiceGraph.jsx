@@ -4,6 +4,80 @@ import localServices from './service-metadata.json';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+function ColorKeyRow() {
+  return (
+    <table
+      style={{
+        width: '100%',
+        borderCollapse: 'collapse',
+        fontSize: 12,
+      }}
+    >
+      <tbody>
+        <tr>
+          <KeyCell
+            color="#22c55e"
+            border="#0f172a"
+            label="Fresh"
+            rule="≤ 31 days"
+          />
+          <KeyCell
+            color="#f59e0b"
+            border="#0f172a"
+            label="Aging"
+            rule="31–183 days"
+          />
+          <KeyCell
+            color="#ef4444"
+            border="#0f172a"
+            label="Stale"
+            rule="> 183 days"
+          />
+          <KeyCell
+            color="#FFD966"
+            border="#C9A300"
+            label="Missing metadata"
+            rule="Dependency not in list"
+          />
+        </tr>
+      </tbody>
+    </table>
+  );
+}
+
+function KeyCell({ color, border, label, rule }) {
+  return (
+    <td
+      style={{
+        padding: '6px 10px',
+        borderRight: '1px solid rgba(148,163,184,0.25)',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div
+          style={{
+            width: 14,
+            height: 14,
+            borderRadius: 7,
+            background: color,
+            border: `2px solid ${border}`,
+            flexShrink: 0,
+          }}
+        />
+        <div style={{ lineHeight: 1.2 }}>
+          <div style={{ color: '#e5e7eb', fontWeight: 600 }}>
+            {label}
+          </div>
+          <div style={{ fontSize: 10, color: '#9ca3af' }}>
+            {rule}
+          </div>
+        </div>
+      </div>
+    </td>
+  );
+}
+
 function daysSince(dateStr) {
   if (!dateStr) return Number.POSITIVE_INFINITY;
   const d = new Date(dateStr);
@@ -31,13 +105,16 @@ function buildElements(services) {
   const producers = new Map(); // eventName -> Set(serviceId)
   const consumers = new Map(); // eventName -> Set(serviceId)
 
+  // Used to mark dependencies that are not present in the metadata list
+  const serviceIdSet = new Set(services.map((s) => s.name).filter(Boolean));
+
   services.forEach((svc) => {
     const id = svc.name;
     if (!id) return;
 
     // Ensure node exists (create if missing)
     if (!nodesById.has(id)) {
-      nodesById.set(id, { data: { id, label: id } });
+      nodesById.set(id, { data: { id, label: id, missing: 0 } });
     }
 
     // ALWAYS update node fields for real services (even if it already existed)
@@ -53,7 +130,8 @@ function buildElements(services) {
       producedEvents: [],
       consumedEvents: [],
       ragColor: ragColorFromUpdatedAt(updatedAt),
-      updatedAt
+      updatedAt,
+      missing: 0
     };
 
     const nodeData = nodesById.get(id).data;
@@ -74,6 +152,7 @@ function buildElements(services) {
             weight: 0,
             producedEvents: [],
             consumedEvents: [],
+            missing: serviceIdSet.has(dep.name) ? 0 : 1,
           },
         });
       }
@@ -103,6 +182,7 @@ function buildElements(services) {
             weight: 0,
             producedEvents: [],
             consumedEvents: [],
+            missing: serviceIdSet.has(dep.name) ? 0 : 1,
           },
         });
       }
@@ -587,6 +667,7 @@ export default function ServiceGraph() {
         'text-valign': 'center',
         'text-halign': 'center',
         'border-width': 2,
+        'border-style': 'solid',
         'border-color': '#0f172a',
         width: (ele) => {
           const w = ele.data('weight') || 0;
@@ -604,6 +685,13 @@ export default function ServiceGraph() {
         },
         'transition-property': 'background-color, border-color, opacity',
         'transition-duration': '150ms',
+      },
+    },
+    {
+      selector: 'node[missing = 1]',
+      style: {
+        'background-color': '#FFD966',
+        'border-color': '#C9A300'
       },
     },
     {
@@ -1216,16 +1304,42 @@ export default function ServiceGraph() {
       </div>
 
       {/* MIDDLE GRAPH AREA */}
-      <div style={{ flex: '1 1 auto' }}>
-        <CytoscapeView
-          elements={filteredElements}
-          layout={layout}
-          stylesheet={stylesheet}
-          onReady={setCyInstance}
-        />
+      <div
+        style={{
+          flex: '1 1 auto',
+          display: 'flex',
+          flexDirection: 'column',
+          minWidth: 0,         // prevents flex overflow weirdness
+          minHeight: 0,        // IMPORTANT so cytoscape can size correctly
+          background: '#020617'
+        }}
+      >
+        {/* Hard legend header */}
+        <div
+          style={{
+            padding: '10px 12px',
+            borderBottom: '1px solid rgba(148,163,184,0.25)',
+            background: 'rgba(2,6,23,0.95)'
+          }}
+        >
+          <ColorKeyRow />
+        </div>
+
+        {/* Graph area (fills remaining space) */}
+        <div style={{ flex: '1 1 auto', minHeight: 0 }}>
+          <CytoscapeView
+            elements={filteredElements}
+            layout={layout}
+            stylesheet={stylesheet}
+            onReady={setCyInstance}
+          />
+        </div>
       </div>
 
       {/* RIGHT DETAILS PANEL */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+  
+      </div>
       <div
         style={{
           width: 300,
@@ -1245,7 +1359,9 @@ export default function ServiceGraph() {
             justifyContent: 'space-between',
           }}
         >
-          <div style={{ fontSize: 16, fontWeight: 600 }}>Service details</div>
+   
+        <div style={{ fontSize: 16, fontWeight: 600 }}>Service details</div>
+        <br/>
           <button
             onClick={handleResetSelection}
             style={{
