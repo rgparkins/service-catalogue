@@ -3,7 +3,7 @@
   "owner": "another@domain.com",
   "vision": "To perform a service",
   "repo": "https://github.com/acompanyname/eng.service7",
-  "runbook": "https://acompany.atlassian.net/wiki/spaces/ON/pages/324234/runbook",
+  "documentation": "https://acompany.atlassian.net/wiki/spaces/ON/pages/324234/documentation",
   "role": "api",
   "protocol": "http",
   "format": "json",
@@ -28,9 +28,5 @@
       }
     ]
   },
-  "events": [],
-  "metrics": {
-    "emits": ["sds"],
-    "receiver": "domainb"
-  }
+  "events": []
 }

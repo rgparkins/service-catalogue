@@ -3,49 +3,45 @@
   "owner": "another@domain.com",
   "vision": "To perform a service",
   "repo": "https://github.com/acompanyname/eng.service7",
-  "runbook": "https://acompany.atlassian.net/wiki/spaces/ON/pages/324234/runbook",
-  "team": "Rewards",
-  "contracts": [{
-    "role":"api",
-    "protocol":"http"
-  }],
+  "documentation": "https://docs.engineering.company.com/domaina-service1?id=f9c8f518fe74",
+  "team": "Newton",
+  "contracts": [
+    {
+      "role": "storage",
+      "protocol": "http"
+    }
+  ],
   "format": "json",
   "dependencies": {
     "critical": [
       {
         "name": "domainb.service88",
-        "role": "api",
+        "role": "task",
         "protocol": "http"
       },
       {
         "name": "engineering.test",
-        "role": "api",
+        "role": "storage",
         "protocol": "http"
       }
     ],
     "non-critical": [
       {
         "name": "domainb.legacy-enquiries",
-        "role": "api",
+        "role": "consumer",
         "protocol": "http"
       },
       {
-        "name": "product.legacy-enquiries",
+        "name": "engineering.legacy-enquiries",
         "role": "api",
         "protocol": "http"
       },
       {
         "name": "domainb.service2",
-        "role": "api",
+        "role": "ui",
         "protocol": "http"
       }
     ]
   },
-  "events": [],
-  "metrics": {
-    "emits": [
-      "quoting_bearer_token"
-    ],
-    "receiver": "domainb"
-  }
+  "events": []
 }

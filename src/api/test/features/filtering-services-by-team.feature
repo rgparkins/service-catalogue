@@ -13,11 +13,7 @@ Feature: Filtering services by team
     When I update payload from file assets/2.0.0/valid-service-metadata-service3.json to body
     When I POST to /services/metadata/domaina.service3
     Then response code should be 201
-    When I GET /services/metadata?team=Pet
-    Then response body path $ should be of type array with length 2
-    When I GET /services/metadata?team=Pet
-    Then response body path $ should be of type array with length 2
-    When I GET /services?team=Pet
-    Then response body path $ should be of type array with length 2
-    When I GET /services?team=Pet
-    Then response body path $ should be of type array with length 2
+    When I GET /services/metadata?team=Data Insights
+    Then response body path $ should be of type array with length 1
+    When I GET /services?team=Data Insights
+    Then response body path $ should be of type array with length 1

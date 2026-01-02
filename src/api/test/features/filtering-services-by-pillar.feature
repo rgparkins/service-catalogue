@@ -14,11 +14,7 @@ Feature: Filtering services by pillar
     When I update payload from file assets/2.0.0/valid-service-metadata-service5.json to body
     When I POST to /services/metadata/domainb.service5
     Then response code should be 201
-    When I GET /services/metadata?pillar=Customer Channels
-    Then response body path $ should be of type array with length 1
-    When I GET /services/metadata?pillar=Micro-services
-    Then response body path $ should be of type array with length 1
-    When I GET /services?pillar=Customer Channels
-    Then response body path $ should be of type array with length 1
-    When I GET /services?pillar=Micro-services
+    When I GET /services/metadata?pillar=Account
+    Then response body path $ should be of type array with length 3
+    When I GET /services/metadata?pillar=Data
     Then response body path $ should be of type array with length 1

@@ -10,5 +10,5 @@ Feature: Filtering services by dependency
     When I update payload from file assets/2.0.0/valid-service-metadata-service3.json to body
     When I POST to /services/metadata/domaina.service3
     Then response code should be 201
-    When I GET /services/metadata?depends_on=test
-    Then response body path $ should be of type array with length 2
+    When I GET /services/metadata?depends_on=domainb
+    Then response body path $ should be of type array with length 3

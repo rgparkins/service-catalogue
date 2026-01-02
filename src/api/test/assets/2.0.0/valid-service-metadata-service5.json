@@ -3,30 +3,32 @@
   "owner": "another@domain.com",
   "vision": "To perform a service",
   "repo": "https://github.com/acompanyname/eng.service7",
-  "runbook": "https://acompany.atlassian.net/wiki/spaces/ON/pages/324234/runbook",
-  "team": "Lego",
-  "contracts": [{
-    "role":"api",
-    "protocol":"http"
-  }],
+  "documentation": "https://docs.engineering.company.com/domainb-service5?id=2d23a0f83910",
+  "team": "Fermi",
+  "contracts": [
+    {
+      "role": "storage",
+      "protocol": "http"
+    }
+  ],
   "format": "json",
   "dependencies": {
     "critical": [
       {
         "name": "domainb.service88",
-        "role": "api",
+        "role": "ui",
         "protocol": "http"
       }
     ],
     "non-critical": [
       {
         "name": "domainb.legacy-enquiries",
-        "role": "api",
+        "role": "storage",
         "protocol": "http"
       },
       {
-        "name": "product.legacy-enquiries",
-        "role": "api",
+        "name": "engineering.legacy-enquiries",
+        "role": "consumer",
         "protocol": "http"
       },
       {
@@ -36,11 +38,5 @@
       }
     ]
   },
-  "events": [],
-  "metrics": {
-    "emits": [
-      "quoting_bearer_token"
-    ],
-    "receiver": "domainb"
-  }
+  "events": []
 }

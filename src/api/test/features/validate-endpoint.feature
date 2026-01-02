@@ -3,7 +3,7 @@ Feature: Validating a document
     Given I pipe contents of file assets/1.0.2/valid-service-metadata.json to body
     And I set Content-Type header to application/json
     When I POST to /metadata/validate
-    Then response code should be 202
+    Then response code should be 400
   Scenario: Validating a document valid against the latest schema with the latest schema
     Given I pipe contents of file assets/2.0.0/valid-service-metadata.json to body
     And I set Content-Type header to application/json

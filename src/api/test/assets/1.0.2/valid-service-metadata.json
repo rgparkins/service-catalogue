@@ -3,34 +3,31 @@
   "owner": "another@domain.com",
   "vision": "To perform a service",
   "repo": "https://github.com/acompanyname/eng.service7",
-  "runbook": "https://acompany.atlassian.net/wiki/spaces/ON/pages/324234/runbook",
-  "role": "api",
+  "documentation": "https://docs.engineering.company.com/domaina-service8?id=2b19841d9ab5",
+  "role": "consumer",
   "protocol": "http",
   "format": "json",
   "dependencies": {
     "critical": [
       {
         "name": "domainb.service88",
-        "role": "api",
+        "role": "storage",
         "protocol": "http"
       },
       {
         "name": "domainb.service66",
-        "role": "api",
+        "role": "producer",
         "protocol": "http"
       }
     ],
     "non-critical": [
       {
         "name": "domainb.legacy-enquiries",
-        "role": "api",
+        "role": "consumer",
         "protocol": "http"
       }
     ]
   },
   "events": [],
-  "metrics": {
-    "emits": ["sds"],
-    "receiver": "domainb"
-  }
+  "team": "Einstein"
 }

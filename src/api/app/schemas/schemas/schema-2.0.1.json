@@ -8,11 +8,10 @@
     "name",
     "owner",
     "repo",
-    "runbook",
+    "documentation",
     "contracts",
     "dependencies",
     "events",
-    "metrics",
     "team"
   ],
   "additionalProperties": false,
@@ -42,8 +41,8 @@
       "type": "string",
       "format": "uri"
     },
-    "runbook": {
-      "description": "The URI to the runbook for this service.",
+    "documentation": {
+      "description": "The URI to the documentation for this service.",
       "type": "string",
       "format": "uri"
     },
@@ -88,68 +87,19 @@
     },
     "events": {
       "description": "A list of events that the service interacts with. Supply an empty array if the service neither consumes nor produces events. A topic and at least one of either consumes or produces must be specified to be a valid array.",
-      "type": "array",
-      "minItems": 0,
-      "additionalProperties": false,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "uniqueItems": true,
-        "required": [
-          "topic"
-        ],
-        "anyOf": [
-          {
-            "required": [
-              "consumes"
-            ]
-          },
-          {
-            "required": [
-              "produces"
-            ]
-          }
-        ],
-        "properties": {
-          "topic": {
-            "description": "The topic the event is for/from.",
-            "type": "string"
-          },
-          "consumes": {
-            "description": "Events that the service listens for.",
-            "$ref": "#/definitions/eventlist"
-          },
-          "produces": {
-            "description": "Events that the service sends through the Event Sink.",
-            "$ref": "#/definitions/eventlist"
-          }
-        }
-      }
-    },
-    "metrics": {
-      "description": "Information on Prometheus metrics.",
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "emits",
-        "receiver"
-      ],
       "properties": {
-        "emits": {
-          "description": "A list if the prometheus metrics the service emits.",
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {
-            "type": "string"
-          }
+        "producing": {
+          "description": "The events the service publishes",
+          "$ref": "#/definitions/eventlist"
         },
-        "receiver": {
-          "description": "The receiver the alert manager should send alerts to.",
-          "type": "string"
+        "consuming": {
+          "description": "The events the service consumes",
+          "$ref": "#/definitions/eventlist"
         }
       }
-    }
+    }      
   },
   "definitions": {
     "contract": {
@@ -193,14 +143,25 @@
       "type": "string",
       "pattern": "^[a-z\\-]+\\.[a-z0-9\\-]+$"
     },
-    "eventname": {
-      "type": "string"
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "The event name",
+          "type": "string"
+        },
+        "description": {
+          "description": "The event description",
+          "type": "string"
+        }
+      }
     },
     "eventlist": {
       "type": "array",
       "uniqueItems": true,
       "items": {
-        "$ref": "#/definitions/eventname"
+        "$ref": "#/definitions/event"
       }
     },
     "dependency": {

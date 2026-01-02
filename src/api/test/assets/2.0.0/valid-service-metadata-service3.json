@@ -3,8 +3,8 @@
   "owner": "another@domain.com",
   "vision": "To perform a service",
   "repo": "https://github.com/acompanyname/eng.service7",
-  "runbook": "https://acompany.atlassian.net/wiki/spaces/ON/pages/324234/runbook",
-  "team": "Pet",
+  "documentation": "https://acompany.atlassian.net/wiki/spaces/ON/pages/324234/documentation",
+  "team": "Data Insights",
   "contracts": [{
     "role":"api",
     "protocol":"http"
@@ -25,7 +25,7 @@
         "protocol": "http"
       },
       {
-        "name": "product.legacy-enquiries",
+        "name": "engineering.legacy-enquiries",
         "role": "api",
         "protocol": "http"
       },
@@ -36,11 +36,5 @@
       }
     ]
   },
-  "events": [],
-  "metrics": {
-    "emits": [
-      "quoting_bearer_token"
-    ],
-    "receiver": "domainb"
-  }
+  "events": []
 }

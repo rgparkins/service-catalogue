@@ -1,23 +1,22 @@
 [
   {
-    "name": "learner-profile-service",
+    "name": "engineering.learner-profile-service",
     "owner": "team-learner@company.com",
-    "documentation": "",
+    "documentation": "https://docs.engineering.company.com/learner-profile-service?id=ef267df95ddd",
     "vision": "Stores and exposes learner profiles and preferences.",
     "repo": "https://github.com/company/learner-profile-service",
-    "domain": "learner",
-    "team": "learner",
+    "team": "Fermi",
     "contracts": [
       {
-        "role": "learner-api",
+        "role": "api",
         "protocol": "http"
       }
     ],
     "dependencies": {
       "critical": [
         {
-          "name": "auth-service",
-          "role": "authentication",
+          "name": "engineering.auth-service",
+          "role": "consumer",
           "protocol": "http"
         }
       ],
@@ -36,32 +35,26 @@
           "description": "Emitted when a notification is successfully sent."
         }
       ]
-    },
-    "metadata": {
-      "updatedAt": "2025-06-20",
-      "version": "1.0.0",
-      "createdAt": "2025-12-15"
     }
   },
   {
-    "name": "progress-tracking-service",
+    "name": "engineering.progress-tracking-service",
     "owner": "team-learner@company.com",
-    "documentation": "",
+    "documentation": "https://docs.engineering.company.com/progress-tracking-service?id=7b527b982ac9",
     "vision": "Tracks learner progress across courses and modules.",
     "repo": "https://github.com/company/progress-tracking-service",
-    "domain": "learner",
-    "team": "learner",
+    "team": "Darwin",
     "contracts": [
       {
-        "role": "progress-api",
+        "role": "storage",
         "protocol": "http"
       }
     ],
     "dependencies": {
       "critical": [
         {
-          "name": "learner-profile-service",
-          "role": "learner-api",
+          "name": "engineering.learner-profile-service",
+          "role": "storage",
           "protocol": "http"
         }
       ],
@@ -80,24 +73,18 @@
           "description": "Updates learner progression and last-activity timestamps."
         }
       ]
-    },
-    "metadata": {
-      "updatedAt": "2025-09-15",
-      "version": "1.0.0",
-      "createdAt": "2025-12-15"
     }
   },
   {
-    "name": "notification-center-service",
+    "name": "engineering.notification-center-service",
     "owner": "team-engagement@company.com",
-    "documentation": "",
+    "documentation": "https://docs.engineering.company.com/notification-center-service?id=07f34c2544e7",
     "vision": "Sends in-app and push notifications to learners and employers.",
     "repo": "https://github.com/company/notification-center-service",
-    "domain": "engagement",
-    "team": "engagement",
+    "team": "Curie",
     "contracts": [
       {
-        "role": "notification-api",
+        "role": "task",
         "protocol": "http"
       }
     ],
@@ -105,8 +92,8 @@
       "critical": [],
       "non-critical": [
         {
-          "name": "learner-profile-service",
-          "role": "learner-api",
+          "name": "engineering.learner-profile-service",
+          "role": "storage",
           "protocol": "http"
         }
       ]
@@ -124,52 +111,46 @@
           "description": "Emitted when an invoice or payment changes status."
         }
       ]
-    },
-    "metadata": {
-      "updatedAt": "2025-03-28",
-      "version": "1.0.0",
-      "createdAt": "2025-12-15"
     }
   },
   {
-    "name": "reporting-aggregator-service",
+    "name": "engineering.reporting-aggregator-service",
     "owner": "team-reporting@company.com",
-    "documentation": "",
+    "documentation": "https://docs.engineering.company.com/reporting-aggregator-service?id=de25ef0e0592",
     "vision": "Aggregates data from multiple sources for dashboards and exports.",
     "repo": "https://github.com/company/reporting-aggregator-service",
-    "domain": "reporting",
-    "team": "reporting",
+    "team": "Darwin",
     "contracts": [
       {
-        "role": "reporting-api",
+        "role": "task",
         "protocol": "http"
       }
     ],
     "dependencies": {
       "critical": [
         {
-          "name": "progress-tracking-service",
-          "role": "progress-api",
+          "name": "engineering.progress-tracking-service",
+          "role": "task",
           "protocol": "http"
         },
         {
-          "name": "learner-profile-service",
-          "role": "learner-api",
+          "name": "engineering.learner-profile-service",
+          "role": "producer",
           "protocol": "http"
         },
         {
-          "name": "analytics-pipeline-service",
-          "role": "analytics-api",
+          "name": "engineering.analytics-pipeline-service",
+          "role": "consumer",
           "protocol": "http"
         },
         {
-          "name": "payment-billing-service",
-          "role": "billing-api",
+          "name": "engineering.payment-billing-service",
+          "role": "task",
           "protocol": "http"
         },
         {
-          "name": "content-catalog-service",
-          "role": "catalog-api",
+          "name": "engineering.content-catalog-service",
+          "role": "ui",
           "protocol": "http"
         }
       ],
@@ -188,24 +169,18 @@
           "description": "Emitted when a new recommendation set is produced."
         }
       ]
-    },
-    "metadata": {
-      "updatedAt": "2025-05-02",
-      "version": "1.0.0",
-      "createdAt": "2025-12-15"
     }
   },
   {
-    "name": "compliance-audit-service",
+    "name": "engineering.compliance-audit-service",
     "owner": "team-compliance@company.com",
-    "documentation": "",
+    "documentation": "https://docs.engineering.company.com/compliance-audit-service?id=9bae01b59c84",
     "vision": "Maintains audit trails and compliance evidence for regulated learning.",
     "repo": "https://github.com/company/compliance-audit-service",
-    "domain": "compliance",
-    "team": "compliance",
+    "team": "Einstein",
     "contracts": [
       {
-        "role": "audit-log-api",
+        "role": "producer",
         "protocol": "http"
       }
     ],
@@ -213,8 +188,8 @@
       "critical": [],
       "non-critical": [
         {
-          "name": "auth-service",
-          "role": "authentication",
+          "name": "engineering.auth-service",
+          "role": "storage",
           "protocol": "http"
         }
       ]
@@ -227,32 +202,26 @@
           "description": "Emitted when a learner hits a key progress milestone."
         }
       ]
-    },
-    "metadata": {
-      "updatedAt": "2025-12-10",
-      "version": "1.0.0",
-      "createdAt": "2025-12-15"
     }
   },
   {
-    "name": "recommendation-engine-service",
+    "name": "engineering.recommendation-engine-service",
     "owner": "team-insights@company.com",
-    "documentation": "",
+    "documentation": "https://docs.engineering.company.com/recommendation-engine-service?id=d6075b6d9448",
     "vision": "Recommends next-best learning content based on behaviour.",
     "repo": "https://github.com/company/recommendation-engine-service",
-    "domain": "insights",
-    "team": "insights",
+    "team": "Curie",
     "contracts": [
       {
-        "role": "recommendation-api",
+        "role": "ui",
         "protocol": "http"
       }
     ],
     "dependencies": {
       "critical": [
         {
-          "name": "content-catalog-service",
-          "role": "catalog-api",
+          "name": "engineering.content-catalog-service",
+          "role": "api",
           "protocol": "http"
         }
       ],
@@ -271,32 +240,26 @@
           "description": "Emitted when a learner hits a key progress milestone."
         }
       ]
-    },
-    "metadata": {
-      "updatedAt": "2025-02-03",
-      "version": "1.0.0",
-      "createdAt": "2025-12-15"
     }
   },
   {
-    "name": "search-indexer-service",
+    "name": "engineering.search-indexer-service",
     "owner": "team-insights@company.com",
-    "documentation": "",
+    "documentation": "https://docs.engineering.company.com/search-indexer-service?id=411a5fe68c79",
     "vision": "Indexes learning content and activity for fast discovery.",
     "repo": "https://github.com/company/search-indexer-service",
-    "domain": "insights",
-    "team": "insights",
+    "team": "Curie",
     "contracts": [
       {
-        "role": "indexer-api",
+        "role": "ui",
         "protocol": "http"
       }
     ],
     "dependencies": {
       "critical": [
         {
-          "name": "content-catalog-service",
-          "role": "catalog-api",
+          "name": "engineering.content-catalog-service",
+          "role": "consumer",
           "protocol": "http"
         }
       ],
@@ -310,32 +273,26 @@
           "description": "Emitted when a notification is successfully sent."
         }
       ]
-    },
-    "metadata": {
-      "updatedAt": "2025-06-21",
-      "version": "1.0.0",
-      "createdAt": "2025-12-15"
     }
   },
   {
-    "name": "badge-awards-service",
+    "name": "engineering.badge-awards-service",
     "owner": "team-engagement@company.com",
-    "documentation": "",
+    "documentation": "https://docs.engineering.company.com/badge-awards-service?id=e1d7294964a2",
     "vision": "Awards badges and achievements based on learner activity.",
     "repo": "https://github.com/company/badge-awards-service",
-    "domain": "engagement",
-    "team": "engagement",
+    "team": "Fermi",
     "contracts": [
       {
-        "role": "badging-api",
+        "role": "api",
         "protocol": "http"
       }
     ],
     "dependencies": {
       "critical": [
         {
-          "name": "progress-tracking-service",
-          "role": "progress-api",
+          "name": "engineering.progress-tracking-service",
+          "role": "api",
           "protocol": "http"
         }
       ],
@@ -354,32 +311,26 @@
           "description": "Emitted when core learner details or preferences change."
         }
       ]
-    },
-    "metadata": {
-      "updatedAt": "2025-12-03",
-      "version": "1.0.0",
-      "createdAt": "2025-12-15"
     }
   },
   {
-    "name": "learning-path-service",
+    "name": "engineering.learning-path-service",
     "owner": "team-learner@company.com",
-    "documentation": "",
+    "documentation": "https://docs.engineering.company.com/learning-path-service?id=5f6a3b906ce5",
     "vision": "Manages structured learning paths and their completion rules.",
     "repo": "https://github.com/company/learning-path-service",
-    "domain": "learner",
-    "team": "learner",
+    "team": "Fermi",
     "contracts": [
       {
-        "role": "learning-path-api",
+        "role": "producer",
         "protocol": "http"
       }
     ],
     "dependencies": {
       "critical": [
         {
-          "name": "content-catalog-service",
-          "role": "catalog-api",
+          "name": "engineering.content-catalog-service",
+          "role": "external",
           "protocol": "http"
         }
       ],
@@ -398,37 +349,31 @@
           "description": "Emitted when a scheduled or on-demand report completes."
         }
       ]
-    },
-    "metadata": {
-      "updatedAt": "2025-04-27",
-      "version": "1.0.0",
-      "createdAt": "2025-12-15"
     }
   },
   {
-    "name": "mobile-gateway-service",
+    "name": "engineering.mobile-gateway-service",
     "owner": "team-platform@company.com",
-    "documentation": "",
+    "documentation": "https://docs.engineering.company.com/mobile-gateway-service?id=9d9a6f1862cf",
     "vision": "Optimised API gateway for mobile and tablet clients.",
     "repo": "https://github.com/company/mobile-gateway-service",
-    "domain": "platform",
-    "team": "platform",
+    "team": "Fermi",
     "contracts": [
       {
-        "role": "edge-proxy",
+        "role": "task",
         "protocol": "http"
       }
     ],
     "dependencies": {
       "critical": [
         {
-          "name": "auth-service",
-          "role": "authentication",
+          "name": "engineering.auth-service",
+          "role": "storage",
           "protocol": "http"
         },
         {
-          "name": "learner-profile-service",
-          "role": "learner-api",
+          "name": "engineering.learner-profile-service",
+          "role": "ui",
           "protocol": "http"
         }
       ],
@@ -447,24 +392,18 @@
           "description": "Emitted when a learner hits a key progress milestone."
         }
       ]
-    },
-    "metadata": {
-      "updatedAt": "2025-02-13",
-      "version": "1.0.0",
-      "createdAt": "2025-12-15"
     }
   },
   {
-    "name": "auth-service",
+    "name": "engineering.auth-service",
     "owner": "team-security@company.com",
-    "documentation": "",
+    "documentation": "https://docs.engineering.company.com/auth-service?id=0c558ad71459",
     "vision": "Handles authentication, tokens and single sign-on.",
     "repo": "https://github.com/company/auth-service",
-    "domain": "security",
-    "team": "security",
+    "team": "Einstein",
     "contracts": [
       {
-        "role": "authentication",
+        "role": "producer",
         "protocol": "http"
       }
     ],
@@ -475,24 +414,18 @@
     "events": {
       "producing": [],
       "consuming": []
-    },
-    "metadata": {
-      "updatedAt": "2024-12-10",
-      "version": "1.0.0",
-      "createdAt": "2025-12-15"
     }
   },
   {
-    "name": "content-catalog-service",
+    "name": "engineering.content-catalog-service",
     "owner": "team-content@company.com",
-    "documentation": "",
+    "documentation": "https://docs.engineering.company.com/content-catalog-service?id=15cde7fc49bd",
     "vision": "Stores and serves metadata for all learning content.",
     "repo": "https://github.com/company/content-catalog-service",
-    "domain": "content",
-    "team": "content",
+    "team": "Curie",
     "contracts": [
       {
-        "role": "catalog-api",
+        "role": "api",
         "protocol": "http"
       }
     ],
@@ -503,32 +436,26 @@
     "events": {
       "producing": [],
       "consuming": []
-    },
-    "metadata": {
-      "updatedAt": "2025-06-13",
-      "version": "1.0.0",
-      "createdAt": "2025-12-15"
     }
   },
   {
-    "name": "payment-billing-service",
+    "name": "engineering.payment-billing-service",
     "owner": "team-billing@company.com",
-    "documentation": "",
+    "documentation": "https://docs.engineering.company.com/payment-billing-service?id=620e58831f96",
     "vision": "Handles invoicing, refunds and payment status.",
     "repo": "https://github.com/company/payment-billing-service",
-    "domain": "billing",
-    "team": "billing",
+    "team": "Darwin",
     "contracts": [
       {
-        "role": "billing-api",
+        "role": "ui",
         "protocol": "http"
       }
     ],
     "dependencies": {
       "critical": [
         {
-          "name": "auth-service",
-          "role": "authentication",
+          "name": "engineering.auth-service",
+          "role": "producer",
           "protocol": "http"
         }
       ],
@@ -542,24 +469,18 @@
         }
       ],
       "consuming": []
-    },
-    "metadata": {
-      "updatedAt": "2025-09-03",
-      "version": "1.0.0",
-      "createdAt": "2025-12-15"
     }
   },
   {
-    "name": "organisation-directory-service",
+    "name": "engineering.organisation-directory-service",
     "owner": "team-employer@company.com",
-    "documentation": "",
+    "documentation": "https://docs.engineering.company.com/organisation-directory-service?id=55e1e23f0ad4",
     "vision": "Stores employers, providers and organisational relationships.",
     "repo": "https://github.com/company/organisation-directory-service",
-    "domain": "employer",
-    "team": "employer",
+    "team": "Darwin",
     "contracts": [
       {
-        "role": "organisation-api",
+        "role": "consumer",
         "protocol": "http"
       }
     ],
@@ -570,37 +491,31 @@
     "events": {
       "producing": [],
       "consuming": []
-    },
-    "metadata": {
-      "updatedAt": "2025-02-08",
-      "version": "1.0.0",
-      "createdAt": "2025-12-15"
     }
   },
   {
-    "name": "tutor-portal-service",
+    "name": "engineering.tutor-portal-service",
     "owner": "team-tutor@company.com",
-    "documentation": "",
+    "documentation": "https://docs.engineering.company.com/tutor-portal-service?id=810799172e8d",
     "vision": "Provides UI and APIs for tutors to manage cohorts.",
     "repo": "https://github.com/company/tutor-portal-service",
-    "domain": "tutor",
-    "team": "tutor",
+    "team": "Newton",
     "contracts": [
       {
-        "role": "tutor-portal-api",
+        "role": "task",
         "protocol": "http"
       }
     ],
     "dependencies": {
       "critical": [
         {
-          "name": "learner-profile-service",
-          "role": "learner-api",
+          "name": "engineering.learner-profile-service",
+          "role": "consumer",
           "protocol": "http"
         },
         {
-          "name": "organisation-directory-service",
-          "role": "organisation-api",
+          "name": "engineering.organisation-directory-service",
+          "role": "task",
           "protocol": "http"
         }
       ],
@@ -609,37 +524,31 @@
     "events": {
       "producing": [],
       "consuming": []
-    },
-    "metadata": {
-      "updatedAt": "2025-11-27",
-      "version": "1.0.0",
-      "createdAt": "2025-12-15"
     }
   },
   {
-    "name": "employer-portal-service",
+    "name": "engineering.employer-portal-service",
     "owner": "team-employer@company.com",
-    "documentation": "",
+    "documentation": "https://docs.engineering.company.com/employer-portal-service?id=b0db4b79fbfd",
     "vision": "Front door for employers to review progress and manage learners.",
     "repo": "https://github.com/company/employer-portal-service",
-    "domain": "employer",
-    "team": "employer",
+    "team": "Einstein",
     "contracts": [
       {
-        "role": "employer-portal-api",
+        "role": "ui",
         "protocol": "http"
       }
     ],
     "dependencies": {
       "critical": [
         {
-          "name": "organisation-directory-service",
-          "role": "organisation-api",
+          "name": "engineering.organisation-directory-service",
+          "role": "external",
           "protocol": "http"
         },
         {
-          "name": "reporting-aggregator-service",
-          "role": "reporting-api",
+          "name": "engineering.reporting-aggregator-service",
+          "role": "ui",
           "protocol": "http"
         }
       ],
@@ -648,24 +557,18 @@
     "events": {
       "producing": [],
       "consuming": []
-    },
-    "metadata": {
-      "updatedAt": "2025-12-03",
-      "version": "1.0.0",
-      "createdAt": "2025-12-15"
     }
   },
   {
-    "name": "file-storage-service",
+    "name": "engineering.file-storage-service",
     "owner": "team-platform@company.com",
-    "documentation": "",
+    "documentation": "https://docs.engineering.company.com/file-storage-service?id=ee88fa06b200",
     "vision": "Stores and serves user-generated and system files.",
     "repo": "https://github.com/company/file-storage-service",
-    "domain": "platform",
-    "team": "platform",
+    "team": "Darwin",
     "contracts": [
       {
-        "role": "file-storage-api",
+        "role": "task",
         "protocol": "http"
       }
     ],
@@ -676,24 +579,18 @@
     "events": {
       "producing": [],
       "consuming": []
-    },
-    "metadata": {
-      "updatedAt": "2024-12-21",
-      "version": "1.0.0",
-      "createdAt": "2025-12-15"
     }
   },
   {
-    "name": "analytics-pipeline-service",
+    "name": "engineering.analytics-pipeline-service",
     "owner": "team-insights@company.com",
-    "documentation": "",
+    "documentation": "https://docs.engineering.company.com/analytics-pipeline-service?id=04a3eecd8887",
     "vision": "Transforms raw activity into analytical datasets.",
     "repo": "https://github.com/company/analytics-pipeline-service",
-    "domain": "insights",
-    "team": "insights",
+    "team": "Newton",
     "contracts": [
       {
-        "role": "analytics-api",
+        "role": "ui",
         "protocol": "http"
       }
     ],
@@ -709,24 +606,18 @@
           "description": "Emitted when an invoice or payment changes status."
         }
       ]
-    },
-    "metadata": {
-      "updatedAt": "2025-02-19",
-      "version": "1.0.0",
-      "createdAt": "2025-12-15"
     }
   },
   {
-    "name": "feature-flag-service",
+    "name": "engineering.feature-flag-service",
     "owner": "team-platform@company.com",
-    "documentation": "",
+    "documentation": "https://docs.engineering.company.com/feature-flag-service?id=ff3c3de5f11a",
     "vision": "Provides runtime feature toggles and configuration.",
     "repo": "https://github.com/company/feature-flag-service",
-    "domain": "platform",
-    "team": "platform",
+    "team": "Darwin",
     "contracts": [
       {
-        "role": "config-api",
+        "role": "external",
         "protocol": "http"
       }
     ],
@@ -737,11 +628,6 @@
     "events": {
       "producing": [],
       "consuming": []
-    },
-    "metadata": {
-      "updatedAt": "2025-01-16",
-      "version": "1.0.0",
-      "createdAt": "2025-12-15"
     }
   }
 ]
