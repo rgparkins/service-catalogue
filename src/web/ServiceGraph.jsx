@@ -106,10 +106,10 @@ function buildElements(services) {
   const consumers = new Map(); // eventName -> Set(serviceId)
 
   // Used to mark dependencies that are not present in the metadata list
-  const serviceIdSet = new Set(services.map((s) => s.name).filter(Boolean));
+  const serviceIdSet = new Set(services.map((s) => s.service.name).filter(Boolean));
 
   services.forEach((svc) => {
-    const id = svc.name;
+    const id = svc.service.name;
     if (!id) return;
 
     // Ensure node exists (create if missing)
@@ -119,13 +119,13 @@ function buildElements(services) {
 
     // ALWAYS update node fields for real services (even if it already existed)
     const node = nodesById.get(id);
-    const updatedAt = svc?.metadata?.updatedAt ?? null;
+    const updatedAt = svc?.service?.updated ?? null;
 
     node.data = {
       ...node.data,
       id,
       label: id,
-      type: svc.contracts?.[0]?.role || 'service',
+      type: svc.service.metadata.contracts?.[0]?.role || 'service',
       weight: 0,
       producedEvents: [],
       consumedEvents: [],
@@ -137,8 +137,8 @@ function buildElements(services) {
     const nodeData = nodesById.get(id).data;
 
     // Dependencies with critical flag
-    const criticalDeps = svc.dependencies?.critical || [];
-    const nonCriticalDeps = svc.dependencies?.["non-critical"] || [];
+    const criticalDeps = svc.service.metadata.dependencies?.critical || [];
+    const nonCriticalDeps = svc.service.metadata.dependencies?.["non-critical"] || [];
 
     criticalDeps.forEach((dep) => {
       if (!dep.name) return;
@@ -201,7 +201,7 @@ function buildElements(services) {
     });
 
     // Events
-    const ev = svc.events || {};
+    const ev = svc.service.metadata.events || {};
     const producing = ev.producing || [];
     const consuming = ev.consuming || [];
 
@@ -497,7 +497,7 @@ export default function ServiceGraph() {
           const consumers = consumersByEvent.get(k);
           if (!consumers) return;
 
-          // Optional: exclude self if service both produces & consumes
+          //   Optional: exclude self if service both produces & consumes
           const count = consumers.has(id)
             ? consumers.size - 1
             : consumers.size;

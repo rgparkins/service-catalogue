@@ -1,633 +1,785 @@
 [
   {
-    "name": "engineering.learner-profile-service",
-    "owner": "team-learner@company.com",
-    "documentation": "https://docs.engineering.company.com/learner-profile-service?id=ef267df95ddd",
-    "vision": "Stores and exposes learner profiles and preferences.",
-    "repo": "https://github.com/company/learner-profile-service",
-    "team": "Fermi",
-    "contracts": [
-      {
-        "role": "api",
-        "protocol": "http"
-      }
-    ],
-    "dependencies": {
-      "critical": [
-        {
-          "name": "engineering.auth-service",
-          "role": "consumer",
-          "protocol": "http"
-        }
-      ],
-      "non-critical": []
-    },
-    "events": {
-      "producing": [
-        {
-          "name": "BadgeAwarded",
-          "description": "Emitted when a learner is granted a new badge."
-        }
-      ],
-      "consuming": [
-        {
-          "name": "NotificationDispatched",
-          "description": "Emitted when a notification is successfully sent."
-        }
-      ]
-    }
-  },
-  {
-    "name": "engineering.progress-tracking-service",
-    "owner": "team-learner@company.com",
-    "documentation": "https://docs.engineering.company.com/progress-tracking-service?id=7b527b982ac9",
-    "vision": "Tracks learner progress across courses and modules.",
-    "repo": "https://github.com/company/progress-tracking-service",
-    "team": "Darwin",
-    "contracts": [
-      {
-        "role": "storage",
-        "protocol": "http"
-      }
-    ],
-    "dependencies": {
-      "critical": [
-        {
-          "name": "engineering.learner-profile-service",
-          "role": "storage",
-          "protocol": "http"
-        }
-      ],
-      "non-critical": []
-    },
-    "events": {
-      "producing": [
-        {
-          "name": "ReportGenerated",
-          "description": "Emitted when a scheduled or on-demand report completes."
-        }
-      ],
-      "consuming": [
-        {
-          "name": "LearningActivityRecorded",
-          "description": "Updates learner progression and last-activity timestamps."
-        }
-      ]
-    }
-  },
-  {
-    "name": "engineering.notification-center-service",
-    "owner": "team-engagement@company.com",
-    "documentation": "https://docs.engineering.company.com/notification-center-service?id=07f34c2544e7",
-    "vision": "Sends in-app and push notifications to learners and employers.",
-    "repo": "https://github.com/company/notification-center-service",
-    "team": "Curie",
-    "contracts": [
-      {
-        "role": "task",
-        "protocol": "http"
-      }
-    ],
-    "dependencies": {
-      "critical": [],
-      "non-critical": [
-        {
-          "name": "engineering.learner-profile-service",
-          "role": "storage",
-          "protocol": "http"
-        }
-      ]
-    },
-    "events": {
-      "producing": [
-        {
-          "name": "ProgressMilestoneReached",
-          "description": "Emitted when a learner hits a key progress milestone."
-        }
-      ],
-      "consuming": [
-        {
-          "name": "PaymentStatusChanged",
-          "description": "Emitted when an invoice or payment changes status."
-        }
-      ]
-    }
-  },
-  {
-    "name": "engineering.reporting-aggregator-service",
-    "owner": "team-reporting@company.com",
-    "documentation": "https://docs.engineering.company.com/reporting-aggregator-service?id=de25ef0e0592",
-    "vision": "Aggregates data from multiple sources for dashboards and exports.",
-    "repo": "https://github.com/company/reporting-aggregator-service",
-    "team": "Darwin",
-    "contracts": [
-      {
-        "role": "task",
-        "protocol": "http"
-      }
-    ],
-    "dependencies": {
-      "critical": [
-        {
-          "name": "engineering.progress-tracking-service",
-          "role": "task",
-          "protocol": "http"
+    "service": {
+      "metadata": {
+        "name": "engineering.learner-profile-service",
+        "owner": "team-learner@company.com",
+        "documentation": "https://docs.engineering.company.com/learner-profile-service?id=ef267df95ddd",
+        "vision": "Stores and exposes learner profiles and preferences.",
+        "repo": "https://github.com/company/learner-profile-service",
+        "team": "Fermi",
+        "contracts": [
+          {
+            "role": "api",
+            "protocol": "http"
+          }
+        ],
+        "dependencies": {
+          "critical": [
+            {
+              "name": "engineering.auth-service",
+              "role": "consumer",
+              "protocol": "http"
+            }
+          ],
+          "non-critical": []
         },
-        {
-          "name": "engineering.learner-profile-service",
-          "role": "producer",
-          "protocol": "http"
+        "events": {
+          "producing": [
+            {
+              "name": "BadgeAwarded",
+              "description": "Emitted when a learner is granted a new badge."
+            }
+          ],
+          "consuming": [
+            {
+              "name": "NotificationDispatched",
+              "description": "Emitted when a notification is successfully sent."
+            }
+          ]
+        }
+      },
+      "name": "engineering.learner-profile-service",
+      "validated_against": "schema-2.0.1.json",
+      "status": "live",
+      "updated": "2025-12-03"
+    }
+  },
+  {
+    "service": {
+      "metadata": {
+        "name": "engineering.progress-tracking-service",
+        "owner": "team-learner@company.com",
+        "documentation": "https://docs.engineering.company.com/progress-tracking-service?id=7b527b982ac9",
+        "vision": "Tracks learner progress across courses and modules.",
+        "repo": "https://github.com/company/progress-tracking-service",
+        "team": "Darwin",
+        "contracts": [
+          {
+            "role": "storage",
+            "protocol": "http"
+          }
+        ],
+        "dependencies": {
+          "critical": [
+            {
+              "name": "engineering.learner-profile-service",
+              "role": "storage",
+              "protocol": "http"
+            }
+          ],
+          "non-critical": []
         },
-        {
-          "name": "engineering.analytics-pipeline-service",
-          "role": "consumer",
-          "protocol": "http"
+        "events": {
+          "producing": [
+            {
+              "name": "ReportGenerated",
+              "description": "Emitted when a scheduled or on-demand report completes."
+            }
+          ],
+          "consuming": [
+            {
+              "name": "LearningActivityRecorded",
+              "description": "Updates learner progression and last-activity timestamps."
+            }
+          ]
+        }
+      },
+      "name": "engineering.progress-tracking-service",
+      "validated_against": "schema-2.0.1.json",
+      "status": "live",
+      "updated": "2024-02-21"
+    }
+  },
+  {
+    "service": {
+      "metadata": {
+        "name": "engineering.notification-center-service",
+        "owner": "team-engagement@company.com",
+        "documentation": "https://docs.engineering.company.com/notification-center-service?id=07f34c2544e7",
+        "vision": "Sends in-app and push notifications to learners and employers.",
+        "repo": "https://github.com/company/notification-center-service",
+        "team": "Curie",
+        "contracts": [
+          {
+            "role": "task",
+            "protocol": "http"
+          }
+        ],
+        "dependencies": {
+          "critical": [],
+          "non-critical": [
+            {
+              "name": "engineering.learner-profile-service",
+              "role": "storage",
+              "protocol": "http"
+            }
+          ]
         },
-        {
-          "name": "engineering.payment-billing-service",
-          "role": "task",
-          "protocol": "http"
+        "events": {
+          "producing": [
+            {
+              "name": "ProgressMilestoneReached",
+              "description": "Emitted when a learner hits a key progress milestone."
+            }
+          ],
+          "consuming": [
+            {
+              "name": "PaymentStatusChanged",
+              "description": "Emitted when an invoice or payment changes status."
+            }
+          ]
+        }
+      },
+      "name": "engineering.notification-center-service",
+      "validated_against": "schema-2.0.1.json",
+      "status": "live",
+      "updated": "2025-07-31"
+    }
+  },
+  {
+    "service": {
+      "metadata": {
+        "name": "engineering.reporting-aggregator-service",
+        "owner": "team-reporting@company.com",
+        "documentation": "https://docs.engineering.company.com/reporting-aggregator-service?id=de25ef0e0592",
+        "vision": "Aggregates data from multiple sources for dashboards and exports.",
+        "repo": "https://github.com/company/reporting-aggregator-service",
+        "team": "Darwin",
+        "contracts": [
+          {
+            "role": "task",
+            "protocol": "http"
+          }
+        ],
+        "dependencies": {
+          "critical": [
+            {
+              "name": "engineering.progress-tracking-service",
+              "role": "task",
+              "protocol": "http"
+            },
+            {
+              "name": "engineering.learner-profile-service",
+              "role": "producer",
+              "protocol": "http"
+            },
+            {
+              "name": "engineering.analytics-pipeline-service",
+              "role": "consumer",
+              "protocol": "http"
+            },
+            {
+              "name": "engineering.payment-billing-service",
+              "role": "task",
+              "protocol": "http"
+            },
+            {
+              "name": "engineering.content-catalog-service",
+              "role": "ui",
+              "protocol": "http"
+            }
+          ],
+          "non-critical": []
         },
-        {
-          "name": "engineering.content-catalog-service",
-          "role": "ui",
-          "protocol": "http"
+        "events": {
+          "producing": [
+            {
+              "name": "BadgeAwarded",
+              "description": "Emitted when a learner is granted a new badge."
+            }
+          ],
+          "consuming": [
+            {
+              "name": "RecommendationsGenerated",
+              "description": "Emitted when a new recommendation set is produced."
+            }
+          ]
         }
-      ],
-      "non-critical": []
-    },
-    "events": {
-      "producing": [
-        {
-          "name": "BadgeAwarded",
-          "description": "Emitted when a learner is granted a new badge."
-        }
-      ],
-      "consuming": [
-        {
-          "name": "RecommendationsGenerated",
-          "description": "Emitted when a new recommendation set is produced."
-        }
-      ]
+      },
+      "name": "engineering.reporting-aggregator-service",
+      "validated_against": "schema-2.0.1.json",
+      "status": "live",
+      "updated": "2024-01-14"
     }
   },
   {
-    "name": "engineering.compliance-audit-service",
-    "owner": "team-compliance@company.com",
-    "documentation": "https://docs.engineering.company.com/compliance-audit-service?id=9bae01b59c84",
-    "vision": "Maintains audit trails and compliance evidence for regulated learning.",
-    "repo": "https://github.com/company/compliance-audit-service",
-    "team": "Einstein",
-    "contracts": [
-      {
-        "role": "producer",
-        "protocol": "http"
-      }
-    ],
-    "dependencies": {
-      "critical": [],
-      "non-critical": [
-        {
-          "name": "engineering.auth-service",
-          "role": "storage",
-          "protocol": "http"
-        }
-      ]
-    },
-    "events": {
-      "producing": [],
-      "consuming": [
-        {
-          "name": "ProgressMilestoneReached",
-          "description": "Emitted when a learner hits a key progress milestone."
-        }
-      ]
-    }
-  },
-  {
-    "name": "engineering.recommendation-engine-service",
-    "owner": "team-insights@company.com",
-    "documentation": "https://docs.engineering.company.com/recommendation-engine-service?id=d6075b6d9448",
-    "vision": "Recommends next-best learning content based on behaviour.",
-    "repo": "https://github.com/company/recommendation-engine-service",
-    "team": "Curie",
-    "contracts": [
-      {
-        "role": "ui",
-        "protocol": "http"
-      }
-    ],
-    "dependencies": {
-      "critical": [
-        {
-          "name": "engineering.content-catalog-service",
-          "role": "api",
-          "protocol": "http"
-        }
-      ],
-      "non-critical": []
-    },
-    "events": {
-      "producing": [
-        {
-          "name": "RecommendationsGenerated",
-          "description": "Emitted when a new recommendation set is produced."
-        }
-      ],
-      "consuming": [
-        {
-          "name": "ProgressMilestoneReached",
-          "description": "Emitted when a learner hits a key progress milestone."
-        }
-      ]
-    }
-  },
-  {
-    "name": "engineering.search-indexer-service",
-    "owner": "team-insights@company.com",
-    "documentation": "https://docs.engineering.company.com/search-indexer-service?id=411a5fe68c79",
-    "vision": "Indexes learning content and activity for fast discovery.",
-    "repo": "https://github.com/company/search-indexer-service",
-    "team": "Curie",
-    "contracts": [
-      {
-        "role": "ui",
-        "protocol": "http"
-      }
-    ],
-    "dependencies": {
-      "critical": [
-        {
-          "name": "engineering.content-catalog-service",
-          "role": "consumer",
-          "protocol": "http"
-        }
-      ],
-      "non-critical": []
-    },
-    "events": {
-      "producing": [],
-      "consuming": [
-        {
-          "name": "NotificationDispatched",
-          "description": "Emitted when a notification is successfully sent."
-        }
-      ]
-    }
-  },
-  {
-    "name": "engineering.badge-awards-service",
-    "owner": "team-engagement@company.com",
-    "documentation": "https://docs.engineering.company.com/badge-awards-service?id=e1d7294964a2",
-    "vision": "Awards badges and achievements based on learner activity.",
-    "repo": "https://github.com/company/badge-awards-service",
-    "team": "Fermi",
-    "contracts": [
-      {
-        "role": "api",
-        "protocol": "http"
-      }
-    ],
-    "dependencies": {
-      "critical": [
-        {
-          "name": "engineering.progress-tracking-service",
-          "role": "api",
-          "protocol": "http"
-        }
-      ],
-      "non-critical": []
-    },
-    "events": {
-      "producing": [
-        {
-          "name": "PaymentStatusChanged",
-          "description": "Emitted when an invoice or payment changes status."
-        }
-      ],
-      "consuming": [
-        {
-          "name": "LearnerProfileUpdated",
-          "description": "Emitted when core learner details or preferences change."
-        }
-      ]
-    }
-  },
-  {
-    "name": "engineering.learning-path-service",
-    "owner": "team-learner@company.com",
-    "documentation": "https://docs.engineering.company.com/learning-path-service?id=5f6a3b906ce5",
-    "vision": "Manages structured learning paths and their completion rules.",
-    "repo": "https://github.com/company/learning-path-service",
-    "team": "Fermi",
-    "contracts": [
-      {
-        "role": "producer",
-        "protocol": "http"
-      }
-    ],
-    "dependencies": {
-      "critical": [
-        {
-          "name": "engineering.content-catalog-service",
-          "role": "external",
-          "protocol": "http"
-        }
-      ],
-      "non-critical": []
-    },
-    "events": {
-      "producing": [
-        {
-          "name": "LearnerProfileUpdated",
-          "description": "Emitted when core learner details or preferences change."
-        }
-      ],
-      "consuming": [
-        {
-          "name": "ReportGenerated",
-          "description": "Emitted when a scheduled or on-demand report completes."
-        }
-      ]
-    }
-  },
-  {
-    "name": "engineering.mobile-gateway-service",
-    "owner": "team-platform@company.com",
-    "documentation": "https://docs.engineering.company.com/mobile-gateway-service?id=9d9a6f1862cf",
-    "vision": "Optimised API gateway for mobile and tablet clients.",
-    "repo": "https://github.com/company/mobile-gateway-service",
-    "team": "Fermi",
-    "contracts": [
-      {
-        "role": "task",
-        "protocol": "http"
-      }
-    ],
-    "dependencies": {
-      "critical": [
-        {
-          "name": "engineering.auth-service",
-          "role": "storage",
-          "protocol": "http"
+    "service": {
+      "metadata": {
+        "name": "engineering.compliance-audit-service",
+        "owner": "team-compliance@company.com",
+        "documentation": "https://docs.engineering.company.com/compliance-audit-service?id=9bae01b59c84",
+        "vision": "Maintains audit trails and compliance evidence for regulated learning.",
+        "repo": "https://github.com/company/compliance-audit-service",
+        "team": "Einstein",
+        "contracts": [
+          {
+            "role": "producer",
+            "protocol": "http"
+          }
+        ],
+        "dependencies": {
+          "critical": [],
+          "non-critical": [
+            {
+              "name": "engineering.auth-service",
+              "role": "storage",
+              "protocol": "http"
+            }
+          ]
         },
-        {
-          "name": "engineering.learner-profile-service",
-          "role": "ui",
-          "protocol": "http"
+        "events": {
+          "producing": [],
+          "consuming": [
+            {
+              "name": "ProgressMilestoneReached",
+              "description": "Emitted when a learner hits a key progress milestone."
+            }
+          ]
         }
-      ],
-      "non-critical": []
-    },
-    "events": {
-      "producing": [
-        {
-          "name": "NotificationDispatched",
-          "description": "Emitted when a notification is successfully sent."
-        }
-      ],
-      "consuming": [
-        {
-          "name": "ProgressMilestoneReached",
-          "description": "Emitted when a learner hits a key progress milestone."
-        }
-      ]
+      },
+      "name": "engineering.compliance-audit-service",
+      "validated_against": "schema-2.0.1.json",
+      "status": "live",
+      "updated": "2025-10-03"
     }
   },
   {
-    "name": "engineering.auth-service",
-    "owner": "team-security@company.com",
-    "documentation": "https://docs.engineering.company.com/auth-service?id=0c558ad71459",
-    "vision": "Handles authentication, tokens and single sign-on.",
-    "repo": "https://github.com/company/auth-service",
-    "team": "Einstein",
-    "contracts": [
-      {
-        "role": "producer",
-        "protocol": "http"
-      }
-    ],
-    "dependencies": {
-      "critical": [],
-      "non-critical": []
-    },
-    "events": {
-      "producing": [],
-      "consuming": []
-    }
-  },
-  {
-    "name": "engineering.content-catalog-service",
-    "owner": "team-content@company.com",
-    "documentation": "https://docs.engineering.company.com/content-catalog-service?id=15cde7fc49bd",
-    "vision": "Stores and serves metadata for all learning content.",
-    "repo": "https://github.com/company/content-catalog-service",
-    "team": "Curie",
-    "contracts": [
-      {
-        "role": "api",
-        "protocol": "http"
-      }
-    ],
-    "dependencies": {
-      "critical": [],
-      "non-critical": []
-    },
-    "events": {
-      "producing": [],
-      "consuming": []
-    }
-  },
-  {
-    "name": "engineering.payment-billing-service",
-    "owner": "team-billing@company.com",
-    "documentation": "https://docs.engineering.company.com/payment-billing-service?id=620e58831f96",
-    "vision": "Handles invoicing, refunds and payment status.",
-    "repo": "https://github.com/company/payment-billing-service",
-    "team": "Darwin",
-    "contracts": [
-      {
-        "role": "ui",
-        "protocol": "http"
-      }
-    ],
-    "dependencies": {
-      "critical": [
-        {
-          "name": "engineering.auth-service",
-          "role": "producer",
-          "protocol": "http"
-        }
-      ],
-      "non-critical": []
-    },
-    "events": {
-      "producing": [
-        {
-          "name": "LearningActivityRecorded",
-          "description": "Updates learner progression and last-activity timestamps."
-        }
-      ],
-      "consuming": []
-    }
-  },
-  {
-    "name": "engineering.organisation-directory-service",
-    "owner": "team-employer@company.com",
-    "documentation": "https://docs.engineering.company.com/organisation-directory-service?id=55e1e23f0ad4",
-    "vision": "Stores employers, providers and organisational relationships.",
-    "repo": "https://github.com/company/organisation-directory-service",
-    "team": "Darwin",
-    "contracts": [
-      {
-        "role": "consumer",
-        "protocol": "http"
-      }
-    ],
-    "dependencies": {
-      "critical": [],
-      "non-critical": []
-    },
-    "events": {
-      "producing": [],
-      "consuming": []
-    }
-  },
-  {
-    "name": "engineering.tutor-portal-service",
-    "owner": "team-tutor@company.com",
-    "documentation": "https://docs.engineering.company.com/tutor-portal-service?id=810799172e8d",
-    "vision": "Provides UI and APIs for tutors to manage cohorts.",
-    "repo": "https://github.com/company/tutor-portal-service",
-    "team": "Newton",
-    "contracts": [
-      {
-        "role": "task",
-        "protocol": "http"
-      }
-    ],
-    "dependencies": {
-      "critical": [
-        {
-          "name": "engineering.learner-profile-service",
-          "role": "consumer",
-          "protocol": "http"
+    "service": {
+      "metadata": {
+        "name": "engineering.recommendation-engine-service",
+        "owner": "team-insights@company.com",
+        "documentation": "https://docs.engineering.company.com/recommendation-engine-service?id=d6075b6d9448",
+        "vision": "Recommends next-best learning content based on behaviour.",
+        "repo": "https://github.com/company/recommendation-engine-service",
+        "team": "Curie",
+        "contracts": [
+          {
+            "role": "ui",
+            "protocol": "http"
+          }
+        ],
+        "dependencies": {
+          "critical": [
+            {
+              "name": "engineering.content-catalog-service",
+              "role": "api",
+              "protocol": "http"
+            }
+          ],
+          "non-critical": []
         },
-        {
-          "name": "engineering.organisation-directory-service",
-          "role": "task",
-          "protocol": "http"
+        "events": {
+          "producing": [
+            {
+              "name": "RecommendationsGenerated",
+              "description": "Emitted when a new recommendation set is produced."
+            }
+          ],
+          "consuming": [
+            {
+              "name": "ProgressMilestoneReached",
+              "description": "Emitted when a learner hits a key progress milestone."
+            }
+          ]
         }
-      ],
-      "non-critical": []
-    },
-    "events": {
-      "producing": [],
-      "consuming": []
+      },
+      "name": "engineering.recommendation-engine-service",
+      "validated_against": "schema-2.0.1.json",
+      "status": "live",
+      "updated": "2025-01-30"
     }
   },
   {
-    "name": "engineering.employer-portal-service",
-    "owner": "team-employer@company.com",
-    "documentation": "https://docs.engineering.company.com/employer-portal-service?id=b0db4b79fbfd",
-    "vision": "Front door for employers to review progress and manage learners.",
-    "repo": "https://github.com/company/employer-portal-service",
-    "team": "Einstein",
-    "contracts": [
-      {
-        "role": "ui",
-        "protocol": "http"
-      }
-    ],
-    "dependencies": {
-      "critical": [
-        {
-          "name": "engineering.organisation-directory-service",
-          "role": "external",
-          "protocol": "http"
+    "service": {
+      "metadata": {
+        "name": "engineering.search-indexer-service",
+        "owner": "team-insights@company.com",
+        "documentation": "https://docs.engineering.company.com/search-indexer-service?id=411a5fe68c79",
+        "vision": "Indexes learning content and activity for fast discovery.",
+        "repo": "https://github.com/company/search-indexer-service",
+        "team": "Curie",
+        "contracts": [
+          {
+            "role": "ui",
+            "protocol": "http"
+          }
+        ],
+        "dependencies": {
+          "critical": [
+            {
+              "name": "engineering.content-catalog-service",
+              "role": "consumer",
+              "protocol": "http"
+            }
+          ],
+          "non-critical": []
         },
-        {
-          "name": "engineering.reporting-aggregator-service",
-          "role": "ui",
-          "protocol": "http"
+        "events": {
+          "producing": [],
+          "consuming": [
+            {
+              "name": "NotificationDispatched",
+              "description": "Emitted when a notification is successfully sent."
+            }
+          ]
         }
-      ],
-      "non-critical": []
-    },
-    "events": {
-      "producing": [],
-      "consuming": []
+      },
+      "name": "engineering.search-indexer-service",
+      "validated_against": "schema-2.0.1.json",
+      "status": "live",
+      "updated": "2024-10-31"
     }
   },
   {
-    "name": "engineering.file-storage-service",
-    "owner": "team-platform@company.com",
-    "documentation": "https://docs.engineering.company.com/file-storage-service?id=ee88fa06b200",
-    "vision": "Stores and serves user-generated and system files.",
-    "repo": "https://github.com/company/file-storage-service",
-    "team": "Darwin",
-    "contracts": [
-      {
-        "role": "task",
-        "protocol": "http"
-      }
-    ],
-    "dependencies": {
-      "critical": [],
-      "non-critical": []
-    },
-    "events": {
-      "producing": [],
-      "consuming": []
-    }
-  },
-  {
-    "name": "engineering.analytics-pipeline-service",
-    "owner": "team-insights@company.com",
-    "documentation": "https://docs.engineering.company.com/analytics-pipeline-service?id=04a3eecd8887",
-    "vision": "Transforms raw activity into analytical datasets.",
-    "repo": "https://github.com/company/analytics-pipeline-service",
-    "team": "Newton",
-    "contracts": [
-      {
-        "role": "ui",
-        "protocol": "http"
-      }
-    ],
-    "dependencies": {
-      "critical": [],
-      "non-critical": []
-    },
-    "events": {
-      "producing": [],
-      "consuming": [
-        {
-          "name": "PaymentStatusChanged",
-          "description": "Emitted when an invoice or payment changes status."
+    "service": {
+      "metadata": {
+        "name": "engineering.badge-awards-service",
+        "owner": "team-engagement@company.com",
+        "documentation": "https://docs.engineering.company.com/badge-awards-service?id=e1d7294964a2",
+        "vision": "Awards badges and achievements based on learner activity.",
+        "repo": "https://github.com/company/badge-awards-service",
+        "team": "Fermi",
+        "contracts": [
+          {
+            "role": "api",
+            "protocol": "http"
+          }
+        ],
+        "dependencies": {
+          "critical": [
+            {
+              "name": "engineering.progress-tracking-service",
+              "role": "api",
+              "protocol": "http"
+            }
+          ],
+          "non-critical": []
+        },
+        "events": {
+          "producing": [
+            {
+              "name": "PaymentStatusChanged",
+              "description": "Emitted when an invoice or payment changes status."
+            }
+          ],
+          "consuming": [
+            {
+              "name": "LearnerProfileUpdated",
+              "description": "Emitted when core learner details or preferences change."
+            }
+          ]
         }
-      ]
+      },
+      "name": "engineering.badge-awards-service",
+      "validated_against": "schema-2.0.1.json",
+      "status": "live",
+      "updated": "2025-10-20"
     }
   },
   {
-    "name": "engineering.feature-flag-service",
-    "owner": "team-platform@company.com",
-    "documentation": "https://docs.engineering.company.com/feature-flag-service?id=ff3c3de5f11a",
-    "vision": "Provides runtime feature toggles and configuration.",
-    "repo": "https://github.com/company/feature-flag-service",
-    "team": "Darwin",
-    "contracts": [
-      {
-        "role": "external",
-        "protocol": "http"
-      }
-    ],
-    "dependencies": {
-      "critical": [],
-      "non-critical": []
-    },
-    "events": {
-      "producing": [],
-      "consuming": []
+    "service": {
+      "metadata": {
+        "name": "engineering.learning-path-service",
+        "owner": "team-learner@company.com",
+        "documentation": "https://docs.engineering.company.com/learning-path-service?id=5f6a3b906ce5",
+        "vision": "Manages structured learning paths and their completion rules.",
+        "repo": "https://github.com/company/learning-path-service",
+        "team": "Fermi",
+        "contracts": [
+          {
+            "role": "producer",
+            "protocol": "http"
+          }
+        ],
+        "dependencies": {
+          "critical": [
+            {
+              "name": "engineering.content-catalog-service",
+              "role": "external",
+              "protocol": "http"
+            }
+          ],
+          "non-critical": []
+        },
+        "events": {
+          "producing": [
+            {
+              "name": "LearnerProfileUpdated",
+              "description": "Emitted when core learner details or preferences change."
+            }
+          ],
+          "consuming": [
+            {
+              "name": "ReportGenerated",
+              "description": "Emitted when a scheduled or on-demand report completes."
+            }
+          ]
+        }
+      },
+      "name": "engineering.learning-path-service",
+      "validated_against": "schema-2.0.1.json",
+      "status": "live",
+      "updated": "2024-11-18"
+    }
+  },
+  {
+    "service": {
+      "metadata": {
+        "name": "engineering.mobile-gateway-service",
+        "owner": "team-platform@company.com",
+        "documentation": "https://docs.engineering.company.com/mobile-gateway-service?id=9d9a6f1862cf",
+        "vision": "Optimised API gateway for mobile and tablet clients.",
+        "repo": "https://github.com/company/mobile-gateway-service",
+        "team": "Fermi",
+        "contracts": [
+          {
+            "role": "task",
+            "protocol": "http"
+          }
+        ],
+        "dependencies": {
+          "critical": [
+            {
+              "name": "engineering.auth-service",
+              "role": "storage",
+              "protocol": "http"
+            },
+            {
+              "name": "engineering.learner-profile-service",
+              "role": "ui",
+              "protocol": "http"
+            }
+          ],
+          "non-critical": []
+        },
+        "events": {
+          "producing": [
+            {
+              "name": "NotificationDispatched",
+              "description": "Emitted when a notification is successfully sent."
+            }
+          ],
+          "consuming": [
+            {
+              "name": "ProgressMilestoneReached",
+              "description": "Emitted when a learner hits a key progress milestone."
+            }
+          ]
+        }
+      },
+      "name": "engineering.mobile-gateway-service",
+      "validated_against": "schema-2.0.1.json",
+      "status": "live",
+      "updated": "2025-12-10"
+    }
+  },
+  {
+    "service": {
+      "metadata": {
+        "name": "engineering.auth-service",
+        "owner": "team-security@company.com",
+        "documentation": "https://docs.engineering.company.com/auth-service?id=0c558ad71459",
+        "vision": "Handles authentication, tokens and single sign-on.",
+        "repo": "https://github.com/company/auth-service",
+        "team": "Einstein",
+        "contracts": [
+          {
+            "role": "producer",
+            "protocol": "http"
+          }
+        ],
+        "dependencies": {
+          "critical": [],
+          "non-critical": []
+        },
+        "events": {
+          "producing": [],
+          "consuming": []
+        }
+      },
+      "name": "engineering.auth-service",
+      "validated_against": "schema-2.0.1.json",
+      "status": "live",
+      "updated": "2025-11-24"
+    }
+  },
+  {
+    "service": {
+      "metadata": {
+        "name": "engineering.content-catalog-service",
+        "owner": "team-content@company.com",
+        "documentation": "https://docs.engineering.company.com/content-catalog-service?id=15cde7fc49bd",
+        "vision": "Stores and serves metadata for all learning content.",
+        "repo": "https://github.com/company/content-catalog-service",
+        "team": "Curie",
+        "contracts": [
+          {
+            "role": "api",
+            "protocol": "http"
+          }
+        ],
+        "dependencies": {
+          "critical": [],
+          "non-critical": []
+        },
+        "events": {
+          "producing": [],
+          "consuming": []
+        }
+      },
+      "name": "engineering.content-catalog-service",
+      "validated_against": "schema-2.0.1.json",
+      "status": "live",
+      "updated": "2024-04-12"
+    }
+  },
+  {
+    "service": {
+      "metadata": {
+        "name": "engineering.payment-billing-service",
+        "owner": "team-billing@company.com",
+        "documentation": "https://docs.engineering.company.com/payment-billing-service?id=620e58831f96",
+        "vision": "Handles invoicing, refunds and payment status.",
+        "repo": "https://github.com/company/payment-billing-service",
+        "team": "Darwin",
+        "contracts": [
+          {
+            "role": "ui",
+            "protocol": "http"
+          }
+        ],
+        "dependencies": {
+          "critical": [
+            {
+              "name": "engineering.auth-service",
+              "role": "producer",
+              "protocol": "http"
+            }
+          ],
+          "non-critical": []
+        },
+        "events": {
+          "producing": [
+            {
+              "name": "LearningActivityRecorded",
+              "description": "Updates learner progression and last-activity timestamps."
+            }
+          ],
+          "consuming": []
+        }
+      },
+      "name": "engineering.payment-billing-service",
+      "validated_against": "schema-2.0.1.json",
+      "status": "live",
+      "updated": "2025-11-18"
+    }
+  },
+  {
+    "service": {
+      "metadata": {
+        "name": "engineering.organisation-directory-service",
+        "owner": "team-employer@company.com",
+        "documentation": "https://docs.engineering.company.com/organisation-directory-service?id=55e1e23f0ad4",
+        "vision": "Stores employers, providers and organisational relationships.",
+        "repo": "https://github.com/company/organisation-directory-service",
+        "team": "Darwin",
+        "contracts": [
+          {
+            "role": "consumer",
+            "protocol": "http"
+          }
+        ],
+        "dependencies": {
+          "critical": [],
+          "non-critical": []
+        },
+        "events": {
+          "producing": [],
+          "consuming": []
+        }
+      },
+      "name": "engineering.organisation-directory-service",
+      "validated_against": "schema-2.0.1.json",
+      "status": "live",
+      "updated": "2025-06-17"
+    }
+  },
+  {
+    "service": {
+      "metadata": {
+        "name": "engineering.tutor-portal-service",
+        "owner": "team-tutor@company.com",
+        "documentation": "https://docs.engineering.company.com/tutor-portal-service?id=810799172e8d",
+        "vision": "Provides UI and APIs for tutors to manage cohorts.",
+        "repo": "https://github.com/company/tutor-portal-service",
+        "team": "Newton",
+        "contracts": [
+          {
+            "role": "task",
+            "protocol": "http"
+          }
+        ],
+        "dependencies": {
+          "critical": [
+            {
+              "name": "engineering.learner-profile-service",
+              "role": "consumer",
+              "protocol": "http"
+            },
+            {
+              "name": "engineering.organisation-directory-service",
+              "role": "task",
+              "protocol": "http"
+            }
+          ],
+          "non-critical": []
+        },
+        "events": {
+          "producing": [],
+          "consuming": []
+        }
+      },
+      "name": "engineering.tutor-portal-service",
+      "validated_against": "schema-2.0.1.json",
+      "status": "live",
+      "updated": "2025-08-12"
+    }
+  },
+  {
+    "service": {
+      "metadata": {
+        "name": "engineering.employer-portal-service",
+        "owner": "team-employer@company.com",
+        "documentation": "https://docs.engineering.company.com/employer-portal-service?id=b0db4b79fbfd",
+        "vision": "Front door for employers to review progress and manage learners.",
+        "repo": "https://github.com/company/employer-portal-service",
+        "team": "Einstein",
+        "contracts": [
+          {
+            "role": "ui",
+            "protocol": "http"
+          }
+        ],
+        "dependencies": {
+          "critical": [
+            {
+              "name": "engineering.organisation-directory-service",
+              "role": "external",
+              "protocol": "http"
+            },
+            {
+              "name": "engineering.reporting-aggregator-service",
+              "role": "ui",
+              "protocol": "http"
+            }
+          ],
+          "non-critical": []
+        },
+        "events": {
+          "producing": [],
+          "consuming": []
+        }
+      },
+      "name": "engineering.employer-portal-service",
+      "validated_against": "schema-2.0.1.json",
+      "status": "live",
+      "updated": "2025-03-23"
+    }
+  },
+  {
+    "service": {
+      "metadata": {
+        "name": "engineering.file-storage-service",
+        "owner": "team-platform@company.com",
+        "documentation": "https://docs.engineering.company.com/file-storage-service?id=ee88fa06b200",
+        "vision": "Stores and serves user-generated and system files.",
+        "repo": "https://github.com/company/file-storage-service",
+        "team": "Darwin",
+        "contracts": [
+          {
+            "role": "task",
+            "protocol": "http"
+          }
+        ],
+        "dependencies": {
+          "critical": [],
+          "non-critical": []
+        },
+        "events": {
+          "producing": [],
+          "consuming": []
+        }
+      },
+      "name": "engineering.file-storage-service",
+      "validated_against": "schema-2.0.1.json",
+      "status": "live",
+      "updated": "2024-06-10"
+    }
+  },
+  {
+    "service": {
+      "metadata": {
+        "name": "engineering.analytics-pipeline-service",
+        "owner": "team-insights@company.com",
+        "documentation": "https://docs.engineering.company.com/analytics-pipeline-service?id=04a3eecd8887",
+        "vision": "Transforms raw activity into analytical datasets.",
+        "repo": "https://github.com/company/analytics-pipeline-service",
+        "team": "Newton",
+        "contracts": [
+          {
+            "role": "ui",
+            "protocol": "http"
+          }
+        ],
+        "dependencies": {
+          "critical": [],
+          "non-critical": []
+        },
+        "events": {
+          "producing": [],
+          "consuming": [
+            {
+              "name": "PaymentStatusChanged",
+              "description": "Emitted when an invoice or payment changes status."
+            }
+          ]
+        }
+      },
+      "name": "engineering.analytics-pipeline-service",
+      "validated_against": "schema-2.0.1.json",
+      "status": "live",
+      "updated": "2025-10-17"
+    }
+  },
+  {
+    "service": {
+      "metadata": {
+        "name": "engineering.feature-flag-service",
+        "owner": "team-platform@company.com",
+        "documentation": "https://docs.engineering.company.com/feature-flag-service?id=ff3c3de5f11a",
+        "vision": "Provides runtime feature toggles and configuration.",
+        "repo": "https://github.com/company/feature-flag-service",
+        "team": "Darwin",
+        "contracts": [
+          {
+            "role": "external",
+            "protocol": "http"
+          }
+        ],
+        "dependencies": {
+          "critical": [],
+          "non-critical": []
+        },
+        "events": {
+          "producing": [],
+          "consuming": []
+        }
+      },
+      "name": "engineering.feature-flag-service",
+      "validated_against": "schema-2.0.1.json",
+      "status": "live",
+      "updated": "2025-11-13"
     }
   }
 ]

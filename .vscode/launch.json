@@ -24,6 +24,15 @@
         "VITE_SERVICE_METADATA_URL": "http://localhost:3000/services/metadata"
       },
       "console": "integratedTerminal"
+    },
+        {
+      "name": "Debug Vite local file",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "${workspaceFolder}/src/web",
+      "console": "integratedTerminal"
     }
   ]
 }
