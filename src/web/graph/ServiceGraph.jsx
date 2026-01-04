@@ -117,7 +117,7 @@ export default function ServiceGraph() {
   const serviceById = useMemo(() => {
     const map = new Map();
     servicesData.forEach((svc) => {
-      if (svc.name) map.set(svc.name, svc);
+      if (svc.service.name) map.set(svc.service.name, svc.service);
     });
     return map;
   }, [servicesData]);
@@ -840,27 +840,6 @@ export default function ServiceGraph() {
             <span>Event dependencies</span>
           </label>
         </div>
-        <div
-          style={{
-            marginTop: 8,
-            fontSize: 11,
-            color: '#9ca3af',
-          }}
-        >
-          Showing services that match:
-          <br />
-          {selectedEvent === ALL_EVENTS ? (
-            <span>• any event</span>
-          ) : (
-            <span>• event: {selectedEvent}</span>
-          )}
-          <br />
-          {selectedServiceFilter === ALL_SERVICES ? (
-            <span>• any service</span>
-          ) : (
-            <span>• neighbourhood of: {selectedServiceFilter}</span>
-          )}
-        </div>
       </div>
 
       {/* MIDDLE GRAPH AREA */}
@@ -956,12 +935,11 @@ export default function ServiceGraph() {
                 gap: 6,
               }}
             >
-              <Field label="Domain" value={selectedDetails.service?.domain} />
-              <Field label="Team" value={selectedDetails.service?.team} />
-              <Field label="Owner" value={selectedDetails.service?.owner} />
-              <Field label="Repo" value={selectedDetails.service?.repo} />
-              <Field label="Created" value={selectedDetails.service?.metadata?.createdAt} />
-              <Field label="Updated" value={selectedDetails.service?.metadata?.updatedAt} />
+              <Field label="Domain" value={selectedDetails.service?.metadata?.domain} />
+              <Field label="Owner" value={selectedDetails.service?.metadata?.owner} />
+              <Field label="Team" value={selectedDetails.service?.metadata?.team} />
+              <Field label="Repo" value={selectedDetails.service?.metadata?.repo} />
+              <Field label="Updated" value={selectedDetails.service?.updated} />
             </div>
 
             {selectedDetails.service?.vision && (
