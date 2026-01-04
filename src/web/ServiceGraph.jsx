@@ -372,7 +372,7 @@ export default function ServiceGraph() {
   const serviceById = useMemo(() => {
     const map = new Map();
     servicesData.forEach((svc) => {
-      if (svc.name) map.set(svc.name, svc);
+      if (svc.service.name) map.set(svc.service.name, svc);
     });
     return map;
   }, [servicesData]);
@@ -786,7 +786,7 @@ export default function ServiceGraph() {
     return {
       id: selectedNodeId,
       nodeData,
-      service: baseService,
+      service: baseService.service,
       inboundDeps,
       outboundDeps,
       producedEvents,
@@ -1424,15 +1424,14 @@ export default function ServiceGraph() {
                 gap: 6,
               }}
             >
-              <Field label="Domain" value={selectedDetails.service?.domain} />
-              <Field label="Team" value={selectedDetails.service?.team} />
-              <Field label="Owner" value={selectedDetails.service?.owner} />
-              <Field label="Repo" value={selectedDetails.service?.repo} />
-              <Field label="Created" value={selectedDetails.service?.metadata?.createdAt} />
-              <Field label="Updated" value={selectedDetails.service?.metadata?.updatedAt} />
+              <Field label="Domain" value={selectedDetails.service?.metadata?.domain} />
+              <Field label="Team" value={selectedDetails.service?.metadata?.team} />
+              <Field label="Owner" value={selectedDetails.service?.metadata?.owner} />
+              <Field label="Repo" value={selectedDetails.service?.metadata?.repo} />
+              <Field label="Updated" value={selectedDetails.service?.updated} />
             </div>
 
-            {selectedDetails.service?.vision && (
+            {selectedDetails.service?.metadata?.vision && (
               <div>
                 <div
                   style={{
@@ -1446,7 +1445,7 @@ export default function ServiceGraph() {
                   Vision
                 </div>
                 <div style={{ fontSize: 12, color: '#e5e7eb' }}>
-                  {selectedDetails.service.vision}
+                  {selectedDetails.service?.metadata?.vision}
                 </div>
               </div>
             )}
