@@ -1,267 +1,12 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import CytoscapeView from './CytoscapeView.jsx';
-import localServices from './service-metadata.json';
+import ColorKeyRow from './components/ColorKeyRow.jsx';
+import Field from './components/Field.jsx';
+import SectionList from './components/SectionList.jsx';
+import { buildElements, daysSince, normEvent, topByConsumersFromNodes, topByOldestUpdateFromNodes, orphanPublishedEventsFromNodes, topByDependencyConsumersFromGraph } from './serviceGraph.logic.js';
+import { makeStylesheet } from './serviceGraph.styles.js';
+import CytoscapeView from '../CytoscapeView.jsx';
+import localServices from '../service-metadata.json';
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-function ColorKeyRow() {
-  return (
-    <table
-      style={{
-        width: '100%',
-        borderCollapse: 'collapse',
-        fontSize: 12,
-      }}
-    >
-      <tbody>
-        <tr>
-          <KeyCell
-            color="#22c55e"
-            border="#0f172a"
-            label="Fresh"
-            rule="≤ 31 days"
-          />
-          <KeyCell
-            color="#f59e0b"
-            border="#0f172a"
-            label="Aging"
-            rule="31–183 days"
-          />
-          <KeyCell
-            color="#ef4444"
-            border="#0f172a"
-            label="Stale"
-            rule="> 183 days"
-          />
-          <KeyCell
-            color="#FFD966"
-            border="#C9A300"
-            label="Missing metadata"
-            rule="Dependency not in list"
-          />
-        </tr>
-      </tbody>
-    </table>
-  );
-}
-
-function KeyCell({ color, border, label, rule }) {
-  return (
-    <td
-      style={{
-        padding: '6px 10px',
-        borderRight: '1px solid rgba(148,163,184,0.25)',
-        whiteSpace: 'nowrap',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div
-          style={{
-            width: 14,
-            height: 14,
-            borderRadius: 7,
-            background: color,
-            border: `2px solid ${border}`,
-            flexShrink: 0,
-          }}
-        />
-        <div style={{ lineHeight: 1.2 }}>
-          <div style={{ color: '#e5e7eb', fontWeight: 600 }}>
-            {label}
-          </div>
-          <div style={{ fontSize: 10, color: '#9ca3af' }}>
-            {rule}
-          </div>
-        </div>
-      </div>
-    </td>
-  );
-}
-
-function daysSince(dateStr) {
-  if (!dateStr) return Number.POSITIVE_INFINITY;
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return Number.POSITIVE_INFINITY;
-  return Math.floor((Date.now() - d.getTime()) / MS_PER_DAY);
-}
-
-function ragColorFromUpdatedAt(updatedAt) {
-  const days = daysSince(updatedAt);
-
-  // thresholds (approx)
-  const GREEN_DAYS = 31;     // <= 1 month
-  const RED_DAYS = 183;      // > 6 months
-
-  if (days <= GREEN_DAYS) return "#22c55e";   // green 
-  if (days > RED_DAYS) return "#ef4444";      // red
-  return "#f59e0b";                           // amber
-}
-
-// Build Cytoscape elements and metadata from your JSON
-function buildElements(services) {
-  const nodesById = new Map();
-  const edges = [];
-  const inbound = new Map(); // inbound dependency count
-  const producers = new Map(); // eventName -> Set(serviceId)
-  const consumers = new Map(); // eventName -> Set(serviceId)
-
-  // Used to mark dependencies that are not present in the metadata list
-  const serviceIdSet = new Set(services.map((s) => s.service.name).filter(Boolean));
-
-  services.forEach((svc) => {
-    const id = svc.service.name;
-    if (!id) return;
-
-    // Ensure node exists (create if missing)
-    if (!nodesById.has(id)) {
-      nodesById.set(id, { data: { id, label: id, missing: 0 } });
-    }
-
-    // ALWAYS update node fields for real services (even if it already existed)
-    const node = nodesById.get(id);
-    const updatedAt = svc?.service?.updated ?? null;
-
-    node.data = {
-      ...node.data,
-      id,
-      label: id,
-      type: svc.service.metadata.contracts?.[0]?.role || 'service',
-      weight: 0,
-      producedEvents: [],
-      consumedEvents: [],
-      ragColor: ragColorFromUpdatedAt(updatedAt),
-      updatedAt,
-      missing: 0
-    };
-
-    const nodeData = nodesById.get(id).data;
-
-    // Dependencies with critical flag
-    const criticalDeps = svc.service.metadata.dependencies?.critical || [];
-    const nonCriticalDeps = svc.service.metadata.dependencies?.["non-critical"] || [];
-
-    criticalDeps.forEach((dep) => {
-      if (!dep.name) return;
-
-      if (!nodesById.has(dep.name)) {
-        nodesById.set(dep.name, {
-          data: {
-            id: dep.name,
-            label: dep.name,
-            type: dep.role || 'external',
-            weight: 0,
-            producedEvents: [],
-            consumedEvents: [],
-            missing: serviceIdSet.has(dep.name) ? 0 : 1,
-          },
-        });
-      }
-
-      edges.push({
-        data: {
-          id: `dep-${id}-${dep.name}-critical`,
-          source: id,
-          target: dep.name,
-          kind: 'dependency',
-          critical: 'true',
-        },
-      });
-
-      inbound.set(dep.name, (inbound.get(dep.name) || 0) + 1);
-    });
-
-    nonCriticalDeps.forEach((dep) => {
-      if (!dep.name) return;
-
-      if (!nodesById.has(dep.name)) {
-        nodesById.set(dep.name, {
-          data: {
-            id: dep.name,
-            label: dep.name,
-            type: dep.role || 'external',
-            weight: 0,
-            producedEvents: [],
-            consumedEvents: [],
-            missing: serviceIdSet.has(dep.name) ? 0 : 1,
-          },
-        });
-      }
-
-      edges.push({
-        data: {
-          id: `dep-${id}-${dep.name}-noncritical`,
-          source: id,
-          target: dep.name,
-          kind: 'dependency',
-          critical: 'false',
-        },
-      });
-
-      inbound.set(dep.name, (inbound.get(dep.name) || 0) + 1);
-    });
-
-    // Events
-    const ev = svc.service.metadata.events || {};
-    const producing = ev.producing || [];
-    const consuming = ev.consuming || [];
-
-    producing.forEach((e) => {
-      const name = e.name;
-      if (!name) return;
-      nodeData.producedEvents.push(name);
-      if (!producers.has(name)) producers.set(name, new Set());
-      producers.get(name).add(id);
-    });
-
-    consuming.forEach((e) => {
-      const name = e.name;
-      if (!name) return;
-      nodeData.consumedEvents.push(name);
-      if (!consumers.has(name)) consumers.set(name, new Set());
-      consumers.get(name).add(id);
-    });
-  });
-
-  // Event edges (producer -> consumer)
-  const allEventNames = new Set([
-    ...producers.keys(),
-    ...consumers.keys(),
-  ]);
-
-  allEventNames.forEach((eventName) => {
-    const P = [...(producers.get(eventName) || [])];
-    const C = [...(consumers.get(eventName) || [])];
-
-    P.forEach((p) => {
-      C.forEach((c) => {
-        if (p === c) return;
-        edges.push({
-          data: {
-            id: `evt-${eventName}-${p}-${c}`,
-            source: p,
-            target: c,
-            kind: 'event',
-            eventName,
-          },
-        });
-      });
-    });
-  });
-
-  // Calculate weights for node sizing
-  let maxWeight = 0;
-  nodesById.forEach((n, id) => {
-    const w = inbound.get(id) || 0;
-    n.data.weight = w;
-    if (w > maxWeight) maxWeight = w;
-  });
-
-  const elements = [...nodesById.values(), ...edges];
-  const allServices = [...nodesById.keys()].sort();
-  const allEventsSorted = [...allEventNames].sort();
-
-  return { elements, maxWeight, allEvents: allEventsSorted, allServices };
-}
 
 const ALL_EVENTS = 'ALL_EVENTS';
 const ALL_SERVICES = 'ALL_SERVICES';
@@ -372,7 +117,7 @@ export default function ServiceGraph() {
   const serviceById = useMemo(() => {
     const map = new Map();
     servicesData.forEach((svc) => {
-      if (svc.service.name) map.set(svc.service.name, svc);
+      if (svc.name) map.set(svc.name, svc);
     });
     return map;
   }, [servicesData]);
@@ -466,114 +211,17 @@ export default function ServiceGraph() {
     neighborhood.addClass('highlight');
   }, [cyInstance, selectedNodeId, elements]);
 
-  
-    /* ---------- TOP 5 LISTS ---------- */
-    function normEvent(name) {
-      return String(name || '').trim().toLowerCase();
-    }
+  /* ---------- TOP 5 LISTS ---------- */
 
-    const topByConsumers = useMemo(() => {
-      // eventName -> Set(consumer service ids)
-      const consumersByEvent = new Map();
+    const topByConsumers = useMemo(() => topByConsumersFromNodes(nodes), [nodes]);
 
-      nodes.forEach((n) => {
-        (n.data.consumedEvents || []).forEach((ev) => {
-          const k = normEvent(ev);
-          if (!k) return;
-          if (!consumersByEvent.has(k)) consumersByEvent.set(k, new Set());
-          consumersByEvent.get(k).add(n.data.id);
-        });
-      });
+  const topByOldestUpdate = useMemo(() => topByOldestUpdateFromNodes(nodes), [nodes]);
 
-      // For each service, sum consumers of its published events
-      const ranked = nodes.map((n) => {
-        const id = n.data.id;
-        const produced = n.data.producedEvents || [];
+  const orphanPublishedEvents = useMemo(() => orphanPublishedEventsFromNodes(nodes), [nodes]);
 
-        let totalConsumers = 0;
+  const topByDependencyConsumers = useMemo(() => topByDependencyConsumersFromGraph(nodes, edges), [nodes, edges]);
 
-        produced.forEach((ev) => {
-          const k = normEvent(ev);
-          const consumers = consumersByEvent.get(k);
-          if (!consumers) return;
-
-          //   Optional: exclude self if service both produces & consumes
-          const count = consumers.has(id)
-            ? consumers.size - 1
-            : consumers.size;
-
-          totalConsumers += Math.max(0, count);
-        });
-
-        return { id, count: totalConsumers };
-      });
-
-      return ranked
-        .filter((r) => r.count > 0) // optional: remove zero-fanout services
-        .sort((a, b) => b.count - a.count || a.id.localeCompare(b.id))
-        .slice(0, 5);
-    }, [nodes]);
-  
-    const topByOldestUpdate = useMemo(() => {
-      return nodes
-        .map((n) => ({
-          id: n.data.id,
-          daysAgo: daysSince(n.data.updatedAt),
-        }))
-        .filter((n) => Number.isFinite(n.daysAgo))
-        .sort((a, b) => b.daysAgo - a.daysAgo)
-        .slice(0, 5);
-    }, [nodes]);
-  
-    const orphanPublishedEvents = useMemo(() => {
-      const producersByEvent = new Map(); // event -> Set(producers)
-      const consumersByEvent = new Map(); // event -> Set(consumers)
-
-      nodes.forEach((n) => {
-        (n.data.producedEvents || []).forEach((ev) => {
-          if (!producersByEvent.has(ev)) producersByEvent.set(ev, new Set());
-          producersByEvent.get(ev).add(n.data.id);
-        });
-
-        (n.data.consumedEvents || []).forEach((ev) => {
-          if (!consumersByEvent.has(ev)) consumersByEvent.set(ev, new Set());
-          consumersByEvent.get(ev).add(n.data.id);
-        });
-      });
-
-      return Array.from(producersByEvent.entries())
-        .filter(([eventName]) => !consumersByEvent.has(eventName))
-        .map(([eventName, producers]) => ({
-          eventName,
-          producers: Array.from(producers).sort(),
-        }))
-        .sort((a, b) => a.eventName.localeCompare(b.eventName));
-    }, [nodes]);
-
-  const topByDependencyConsumers = useMemo(() => {
-      const inboundCounts = new Map();
-
-      // Initialise counts
-      nodes.forEach((n) => {
-        inboundCounts.set(n.data.id, 0);
-      });
-
-      // Count inbound dependencies
-      edges.forEach((e) => {
-        if (e.data.kind !== 'dependency') return;
-
-        const target = e.data.target;
-        inboundCounts.set(target, (inboundCounts.get(target) || 0) + 1);
-      });
-
-      return Array.from(inboundCounts.entries())
-        .map(([id, count]) => ({ id, count }))
-        .filter((x) => x.count > 0)
-        .sort((a, b) => b.count - a.count || a.id.localeCompare(b.id))
-        .slice(0, 5);
-    }, [nodes, edges]);
-    
-    // Filter elements
+  // Filter elements
     const filteredElements = useMemo(() => {
     let allowedNodeIds = new Set(nodes.map((n) => n.data.id));
 
@@ -654,96 +302,8 @@ export default function ServiceGraph() {
   const layout = { name: 'preset' };
 
   // Styles
-  const stylesheet = [
-    {
-      selector: 'node',
-      style: {
-        'background-color': 'data(ragColor)',
-        label: 'data(label)',
-        'font-size': 10,
-        color: '#e5e7eb',
-        'text-wrap': 'wrap',
-        'text-max-width': 80,
-        'text-valign': 'center',
-        'text-halign': 'center',
-        'border-width': 2,
-        'border-style': 'solid',
-        'border-color': '#0f172a',
-        width: (ele) => {
-          const w = ele.data('weight') || 0;
-          if (!maxWeight) return 40;
-          const min = 40;
-          const max = 110;
-          return min + (w / maxWeight) * (max - min);
-        },
-        height: (ele) => {
-          const w = ele.data('weight') || 0;
-          if (!maxWeight) return 40;
-          const min = 40;
-          const max = 110;
-          return min + (w / maxWeight) * (max - min);
-        },
-        'transition-property': 'background-color, border-color, opacity',
-        'transition-duration': '150ms',
-      },
-    },
-    {
-      selector: 'node[missing = 1]',
-      style: {
-        'background-color': '#FFD966',
-        'border-color': '#C9A300'
-      },
-    },
-    {
-      selector: 'edge[kind = "dependency"]',
-      style: {
-        width: 1.5,
-        'line-color': '#9ca3af',
-        'target-arrow-color': '#9ca3af',
-        'target-arrow-shape': 'triangle',
-        'curve-style': 'bezier',
-      },
-    },
-    {
-      selector: 'edge[kind = "dependency"][critical = "true"]',
-      style: {
-        width: 2.5,
-        'line-color': '#fecaca',
-        'target-arrow-color': '#fecaca',
-      },
-    },
-    {
-      selector: 'edge[kind = "event"]',
-      style: {
-        width: 1.5,
-        'line-style': 'dotted',
-        'line-color': '#f97316',
-        'target-arrow-color': '#f97316',
-        'target-arrow-shape': 'triangle',
-        'curve-style': 'bezier',
-      },
-    },
-    {
-      selector: '.faded',
-      style: {
-        opacity: 0.15,
-      },
-    },
-    {
-      selector: 'node.selected',
-      style: {
-        'border-color': '#facc15',
-        'border-width': 3
-      },
-    },
-    {
-      selector: 'edge.highlight',
-      style: {
-        'line-color': '#e5e7eb',
-        'target-arrow-color': '#e5e7eb',
-      },
-    },
-  ];
+  const stylesheet = useMemo(() => makeStylesheet(maxWeight), [maxWeight]);
+
 
   // Details panel data
   const selectedDetails = useMemo(() => {
@@ -786,7 +346,7 @@ export default function ServiceGraph() {
     return {
       id: selectedNodeId,
       nodeData,
-      service: baseService.service,
+      service: baseService,
       inboundDeps,
       outboundDeps,
       producedEvents,
@@ -1304,42 +864,16 @@ export default function ServiceGraph() {
       </div>
 
       {/* MIDDLE GRAPH AREA */}
-      <div
-        style={{
-          flex: '1 1 auto',
-          display: 'flex',
-          flexDirection: 'column',
-          minWidth: 0,         // prevents flex overflow weirdness
-          minHeight: 0,        // IMPORTANT so cytoscape can size correctly
-          background: '#020617'
-        }}
-      >
-        {/* Hard legend header */}
-        <div
-          style={{
-            padding: '10px 12px',
-            borderBottom: '1px solid rgba(148,163,184,0.25)',
-            background: 'rgba(2,6,23,0.95)'
-          }}
-        >
-          <ColorKeyRow />
-        </div>
-
-        {/* Graph area (fills remaining space) */}
-        <div style={{ flex: '1 1 auto', minHeight: 0 }}>
-          <CytoscapeView
-            elements={filteredElements}
-            layout={layout}
-            stylesheet={stylesheet}
-            onReady={setCyInstance}
-          />
-        </div>
+      <div style={{ flex: '1 1 auto' }}>
+        <CytoscapeView
+          elements={filteredElements}
+          layout={layout}
+          stylesheet={stylesheet}
+          onReady={setCyInstance}
+        />
       </div>
 
       {/* RIGHT DETAILS PANEL */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-  
-      </div>
       <div
         style={{
           width: 300,
@@ -1359,9 +893,7 @@ export default function ServiceGraph() {
             justifyContent: 'space-between',
           }}
         >
-   
-        <div style={{ fontSize: 16, fontWeight: 600 }}>Service details</div>
-        <br/>
+          <div style={{ fontSize: 16, fontWeight: 600 }}>Service details</div>
           <button
             onClick={handleResetSelection}
             style={{
@@ -1424,14 +956,15 @@ export default function ServiceGraph() {
                 gap: 6,
               }}
             >
-              <Field label="Domain" value={selectedDetails.service?.metadata?.domain} />
-              <Field label="Team" value={selectedDetails.service?.metadata?.team} />
-              <Field label="Owner" value={selectedDetails.service?.metadata?.owner} />
-              <Field label="Repo" value={selectedDetails.service?.metadata?.repo} />
-              <Field label="Updated" value={selectedDetails.service?.updated} />
+              <Field label="Domain" value={selectedDetails.service?.domain} />
+              <Field label="Team" value={selectedDetails.service?.team} />
+              <Field label="Owner" value={selectedDetails.service?.owner} />
+              <Field label="Repo" value={selectedDetails.service?.repo} />
+              <Field label="Created" value={selectedDetails.service?.metadata?.createdAt} />
+              <Field label="Updated" value={selectedDetails.service?.metadata?.updatedAt} />
             </div>
 
-            {selectedDetails.service?.metadata?.vision && (
+            {selectedDetails.service?.vision && (
               <div>
                 <div
                   style={{
@@ -1445,7 +978,7 @@ export default function ServiceGraph() {
                   Vision
                 </div>
                 <div style={{ fontSize: 12, color: '#e5e7eb' }}>
-                  {selectedDetails.service?.metadata?.vision}
+                  {selectedDetails.service.vision}
                 </div>
               </div>
             )}
@@ -1474,100 +1007,6 @@ export default function ServiceGraph() {
 }
 
 // Small helpers for nicer formatting
-function Field({ label, value }) {
-  if (!value) return null;
-  return (
-    <div>
-      <div
-        style={{
-          fontSize: 11,
-          letterSpacing: 0.05,
-          textTransform: 'uppercase',
-          color: '#9ca3af',
-          marginBottom: 2,
-        }}
-      >
-        {label}
-      </div>
-      <div style={{ fontSize: 12 }}>{value}</div>
-    </div>
-  );
-}
+
 
 // Handles either strings or {id, critical}
-function SectionList({ title, items }) {
-  if (!items || items.length === 0) return null;
-
-  const isDepObjects = typeof items[0] === 'object' && items[0] !== null;
-
-  return (
-    <div>
-      <div
-        style={{
-          fontSize: 11,
-          letterSpacing: 0.05,
-          textTransform: 'uppercase',
-          color: '#9ca3af',
-          marginBottom: 4,
-          marginTop: 4,
-        }}
-      >
-        {title}
-      </div>
-      <ul
-        style={{
-          listStyle: 'none',
-          padding: 0,
-          margin: 0,
-          fontSize: 12,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 4,
-        }}
-      >
-        {items.map((it) => {
-          const key = isDepObjects ? it.id : it;
-          const label = isDepObjects ? it.id : it;
-          const isCritical = isDepObjects && it.critical;
-
-          const bg = isCritical ? '#451a1a' : '#020617';
-          const border = isCritical ? '#f97373' : '#1f2937';
-          const color = isCritical ? '#fecaca' : '#e5e7eb';
-
-          return (
-            <li
-              key={key}
-              style={{
-                padding: '4px 6px',
-                borderRadius: 4,
-                background: bg,
-                border: `1px solid ${border}`,
-                color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 6,
-              }}
-            >
-              <span>{label}</span>
-              {isCritical && (
-                <span
-                  style={{
-                    fontSize: 9,
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.08,
-                    padding: '1px 4px',
-                    borderRadius: 999,
-                    border: '1px solid #f97373',
-                  }}
-                >
-                  Critical
-                </span>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-}
