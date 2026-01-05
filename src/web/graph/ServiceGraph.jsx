@@ -845,14 +845,47 @@ export default function ServiceGraph() {
           </div>
       </div>
 
-      {/* MIDDLE GRAPH AREA */}
-      <div style={{ flex: '1 1 auto' }}>
-        <CytoscapeView
-          elements={filteredElements}
-          layout={layout}
-          stylesheet={stylesheet}
-          onReady={setCyInstance}
-        />
+      {/* COLOR KEY + MIDDLE GRAPH AREA WRAPPER */}
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+        {/* COLOR KEY SECTION */}
+        <div
+          style={{
+            width: '100%',
+            background: '#0f172a',
+            borderBottom: '1px solid #1e293b',
+            padding: '10px 0',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 32,
+          }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ width: 18, height: 18, borderRadius: '50%', background: '#22c55e', border: '2px solid #0f172a', display: 'inline-block' }} />
+            <span style={{ fontSize: 13 }}>Recently updated</span>
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ width: 18, height: 18, borderRadius: '50%', background: '#f59e0b', border: '2px solid #0f172a', display: 'inline-block' }} />
+            <span style={{ fontSize: 13 }}>Stale update</span>
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ width: 18, height: 18, borderRadius: '50%', background: '#ef4444', border: '2px solid #0f172a', display: 'inline-block' }} />
+            <span style={{ fontSize: 13 }}>Very old update</span>
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ width: 18, height: 18, borderRadius: '50%', background: '#FFD966', border: '2px solid #C9A300', display: 'inline-block' }} />
+            <span style={{ fontSize: 13 }}>Not in catalogue</span>
+          </span>
+        </div>
+        {/* MIDDLE GRAPH AREA */}
+        <div style={{ flex: '1 1 auto', minHeight: 0 }}>
+          <CytoscapeView
+            elements={filteredElements}
+            layout={layout}
+            stylesheet={stylesheet}
+            onReady={setCyInstance}
+          />
+        </div>
       </div>
 
       {/* RIGHT DETAILS PANEL */}
