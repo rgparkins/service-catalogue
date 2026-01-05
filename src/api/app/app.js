@@ -41,5 +41,4 @@ global.ServiceStatus = {
     LIVE: "live",
     DECOMISSIONED: "decommissioned"
 }
-
 export default app;
