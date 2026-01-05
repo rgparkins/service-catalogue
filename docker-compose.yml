@@ -1,4 +1,3 @@
-version: '3.7'
 services:
   app:
     container_name: app
@@ -48,8 +47,6 @@ services:
       - VITE_SERVICE_METADATA_URL=${SERVICE_METADATA_URL}
     networks:
       - test-network
-    depends_on:
-      - app
 networks:
   test-network:
     driver: bridge
