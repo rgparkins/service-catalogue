@@ -557,7 +557,13 @@
               "protocol": "http"
             }
           ],
-          "non-critical": []
+          "non-critical": [
+            {
+              "name": "engineering.auth-service2",
+              "role": "producer",
+              "protocol": "http"
+            }
+          ]
         },
         "events": {
           "producing": [

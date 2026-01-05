@@ -413,7 +413,8 @@ export default function ServiceGraph() {
                   if (e.key === 'Enter') applyRuntimeUrl(runtimeInput);
                 }}
               />
-
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
               <button
                 onClick={() => applyRuntimeUrl(runtimeInput)}
                 style={{
@@ -481,6 +482,66 @@ export default function ServiceGraph() {
           </div>
         </div>
 
+        
+
+
+        {/* Edge type toggles */}
+        <div
+          style={{
+            fontSize: 13,
+            marginTop: 4,
+            paddingTop: 6,
+            borderTop: '1px solid #111827',
+          }}
+        >
+          <div
+            style={{
+              fontSize: 12,
+              color: '#9ca3af',
+              marginBottom: 4,
+            }}
+          >
+            Edge types
+          </div>
+
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 12,
+              marginBottom: 4,
+              cursor: 'pointer',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={showDependencies}
+              onChange={(e) => setShowDependencies(e.target.checked)}
+              style={{ cursor: 'pointer' }}
+            />
+            <span>API / service dependencies</span>
+          </label>
+
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 12,
+              cursor: 'pointer',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={showEvents}
+              onChange={(e) => setShowEvents(e.target.checked)}
+              style={{ cursor: 'pointer' }}
+            />
+            <span>Event dependencies</span>
+          </label>
+        </div>
+        
         {/* Event filter */}
         <div style={{ fontSize: 13 }}>
           <div
@@ -782,64 +843,6 @@ export default function ServiceGraph() {
               </ul>
             )}
           </div>
-
-
-        {/* Edge type toggles */}
-        <div
-          style={{
-            fontSize: 13,
-            marginTop: 4,
-            paddingTop: 6,
-            borderTop: '1px solid #111827',
-          }}
-        >
-          <div
-            style={{
-              fontSize: 12,
-              color: '#9ca3af',
-              marginBottom: 4,
-            }}
-          >
-            Edge types
-          </div>
-
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              fontSize: 12,
-              marginBottom: 4,
-              cursor: 'pointer',
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={showDependencies}
-              onChange={(e) => setShowDependencies(e.target.checked)}
-              style={{ cursor: 'pointer' }}
-            />
-            <span>API / service dependencies</span>
-          </label>
-
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              fontSize: 12,
-              cursor: 'pointer',
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={showEvents}
-              onChange={(e) => setShowEvents(e.target.checked)}
-              style={{ cursor: 'pointer' }}
-            />
-            <span>Event dependencies</span>
-          </label>
-        </div>
       </div>
 
       {/* MIDDLE GRAPH AREA */}
