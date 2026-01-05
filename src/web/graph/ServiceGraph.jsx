@@ -12,6 +12,22 @@ const ALL_EVENTS = 'ALL_EVENTS';
 const ALL_SERVICES = 'ALL_SERVICES';
 
 export default function ServiceGraph() {
+    // Color key filter state (checkboxes)
+    const [colorKeyFilter, setColorKeyFilter] = useState({
+      recent: true,
+      stale: true,
+      old: true,
+      missing: true,
+    });
+
+    // Helper to determine color category for a node
+    function getNodeColorCategory(node) {
+      if (node.data.missing === 1) return 'missing';
+      const days = daysSince(node.data.updatedAt);
+      if (days <= 31) return 'recent';
+      if (days > 183) return 'old';
+      return 'stale';
+    }
   // servicesData comes from either local file or remote URL (if provided by env).
   // Runtime override (localStorage / query / window prop) is supported so users
   // can point the running app at a different metadata URL without rebuilding.
@@ -255,7 +271,9 @@ export default function ServiceGraph() {
       );
     }
 
-    const visibleNodes = nodes.filter((n) => allowedNodeIds.has(n.data.id));
+    let visibleNodes = nodes.filter((n) => allowedNodeIds.has(n.data.id));
+    // Apply color key filter (checkboxes)
+    visibleNodes = visibleNodes.filter((n) => colorKeyFilter[getNodeColorCategory(n)]);
     const visibleNodeIds = new Set(visibleNodes.map((n) => n.data.id));
 
     const visibleEdges = edges.filter((e) => {
@@ -296,6 +314,7 @@ export default function ServiceGraph() {
     positions,
     showDependencies,
     showEvents,
+     colorKeyFilter,
   ]);
 
   // We use a preset layout to respect node.position from elements
@@ -540,6 +559,81 @@ export default function ServiceGraph() {
             />
             <span>Event dependencies</span>
           </label>
+        </div>
+
+        {/* Bubble color filter (checkboxes) */}
+        <div
+          style={{
+            fontSize: 13,
+            marginTop: 12,
+            paddingTop: 8,
+            borderTop: '1px solid #111827',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          }}
+        >
+          <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>
+            Bubble color filter
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[
+              {
+                key: 'recent',
+                color: '#22c55e',
+                border: '#0f172a',
+                label: 'Recently updated',
+              },
+              {
+                key: 'stale',
+                color: '#f59e0b',
+                border: '#0f172a',
+                label: 'Stale update',
+              },
+              {
+                key: 'old',
+                color: '#ef4444',
+                border: '#0f172a',
+                label: 'Very old update',
+              },
+              {
+                key: 'missing',
+                color: '#FFD966',
+                border: '#C9A300',
+                label: 'Not in catalogue',
+              },
+            ].map((item) => (
+              <label
+                key={item.key}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  opacity: colorKeyFilter[item.key] ? 1 : 0.5,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={colorKeyFilter[item.key]}
+                  onChange={() => setColorKeyFilter((prev) => ({ ...prev, [item.key]: !prev[item.key] }))}
+                  style={{ cursor: 'pointer' }}
+                />
+                <span
+                  style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: '50%',
+                    background: item.color,
+                    border: `2px solid ${item.border}`,
+                    display: 'inline-block',
+                  }}
+                />
+                <span>{item.label}</span>
+              </label>
+            ))}
+          </div>
         </div>
         
         {/* Event filter */}
