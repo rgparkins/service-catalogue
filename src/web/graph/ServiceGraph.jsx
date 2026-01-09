@@ -34,9 +34,9 @@ export default function ServiceGraph() {
   const getInitialRuntimeUrl = () => {
     if (typeof window === 'undefined') return null;
     try {
-      const stored = localStorage.getItem('SERVICE_METADATA_URL');
+      const stored = localStorage.getItem('VITE_SERVICE_METADATA_URL');
       if (stored) return stored;
-      if (window.__SERVICE_METADATA_URL) return window.__SERVICE_METADATA_URL;
+      if (window.__VITE_SERVICE_METADATA_URL) return window.__VITE_SERVICE_METADATA_URL;
       const qp = new URLSearchParams(window.location.search).get('metadata_url');
       if (qp) return qp;
     } catch (e) {
@@ -45,21 +45,27 @@ export default function ServiceGraph() {
     return null;
   };
 
-  const [servicesData, setServicesData] = useState(localServices);
-  const [dataSource, setDataSource] = useState('local'); // 'local' or 'remote'
+  const [servicesData, setServicesData] = useState(null); // null until we decide
+  const [dataSource, setDataSource] = useState('init');   // 'init' | 'local' | 'remote'
   const [fetchError, setFetchError] = useState(null);
   const [runtimeUrl, setRuntimeUrl] = useState(getInitialRuntimeUrl);
   const [runtimeInput, setRuntimeInput] = useState(runtimeUrl || '');
 
   // Recompute graph elements when services data changes
-  const { elements, maxWeight, allEvents, allServices } = useMemo(
-    () => buildElements(servicesData),
-    [servicesData]
-  );
+  const { elements, maxWeight, allEvents, allServices } = useMemo(() => {
+    if (!servicesData) {
+      return { elements: [], maxWeight: 0, allEvents: [], allServices: [] };
+    }
+    return buildElements(servicesData);
+  }, [servicesData]);
 
   // Fetch remote metadata if Vite env var is provided
-  const fetchRemote = async (urlOverride) => {
-    const url = urlOverride || runtimeUrl || import.meta.env.VITE_SERVICE_METADATA_URL;
+  const fetchRemote = async (urlOverride, { fallbackToLocal = false } = {}) => {
+    const url =
+      urlOverride ||
+      runtimeUrl ||
+      import.meta.env.VITE_SERVICE_METADATA_URL;
+
     if (!url) return;
 
     const controller = new AbortController();
@@ -70,17 +76,21 @@ export default function ServiceGraph() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       if (!Array.isArray(json)) throw new Error('expected JSON array');
+
       setServicesData(json);
       setDataSource('remote');
       setFetchError(null);
     } catch (err) {
-      if (err.name === 'AbortError') {
-        setFetchError('Request timed out');
-      } else {
-        setFetchError(String(err.message || err));
+      const msg =
+        err.name === 'AbortError' ? 'Request timed out' : String(err.message || err);
+
+      setFetchError(msg);
+
+      if (fallbackToLocal) {
+        setServicesData(localServices);
+        setDataSource('local');
       }
-      // keep local services as fallback
-      setDataSource('local');
+      // If not fallbackToLocal, keep whatever is already shown
     } finally {
       clearTimeout(timeout);
     }
@@ -99,18 +109,37 @@ export default function ServiceGraph() {
   };
 
   const clearRuntimeUrl = () => {
-    try {
-      localStorage.removeItem('SERVICE_METADATA_URL');
-    } catch (e) {}
-    setRuntimeUrl(null);
-    setRuntimeInput('');
-    // try fetching from env (or fallback to local)
-    fetchRemote();
+    // try {
+    //   localStorage.removeItem('SERVICE_METADATA_URL');
+    // } catch (e) {}
+    // setRuntimeUrl(null);
+    // setRuntimeInput('');
+    // // try fetching from env (or fallback to local)
+    // fetchRemote();
+
+    const envUrl = import.meta.env.VITE_SERVICE_METADATA_URL;
+    if (envUrl) {
+      fetchRemote(envUrl, { fallbackToLocal: true });
+    } else {
+      setServicesData(localServices);
+      setDataSource('local');
+    }
   };
 
   useEffect(() => {
-    // try fetching once at mount
-    fetchRemote();
+    const url =
+      getInitialRuntimeUrl() ||
+      import.meta.env.VITE_SERVICE_METADATA_URL;
+
+    if (url) {
+      // boot path: remote first (single load)
+      fetchRemote(url, { fallbackToLocal: true });
+    } else {
+      // boot path: local only (single load)
+      setServicesData(localServices);
+      setDataSource('local');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -132,7 +161,7 @@ export default function ServiceGraph() {
   // Map id -> full service metadata
   const serviceById = useMemo(() => {
     const map = new Map();
-    servicesData.forEach((svc) => {
+    (servicesData || []).forEach((svc) => {
       if (svc.service.name) map.set(svc.service.name, svc.service);
     });
     return map;
@@ -972,6 +1001,7 @@ export default function ServiceGraph() {
           </span>
         </div>
         {/* MIDDLE GRAPH AREA */}
+        
         <div style={{ flex: '1 1 auto', minHeight: 0 }}>
           <CytoscapeView
             elements={filteredElements}
