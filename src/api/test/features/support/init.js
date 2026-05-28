@@ -3,6 +3,7 @@
 const apickli = require('apickli');
 const {Before} = require('cucumber');
 const MongoClient = require('mongodb').MongoClient;
+const crypto = require('crypto');
 
 let config = {
     connection_string: process.env.MONGODB_ATLAS_URI,
@@ -34,4 +35,21 @@ Before(async function() {
 
     await db.collection('service').deleteMany({});
     await db.collection('service_history').deleteMany({});
+    await db.collection('accounts').deleteMany({});
+    await db.collection('usage_events').deleteMany({});
+
+    const defaultRawKey = 'default-tenant-api-key';
+    const defaultKeyHash = crypto.createHash('sha256').update(defaultRawKey).digest('hex');
+    await db.collection('accounts').insertOne({
+        tenantId: 'default',
+        companyName: 'Default',
+        billingEmail: 'default@example.com',
+        apiKeyHash: defaultKeyHash,
+        plan: 'pro',
+        createdAt: new Date(),
+        active: true
+    });
+
+    // apickli's addRequestHeader appends values; set directly so scenarios can override cleanly.
+    this.apickli.headers['Authorization'] = `Bearer ${defaultRawKey}`;
 });

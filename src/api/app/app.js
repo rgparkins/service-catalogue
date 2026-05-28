@@ -8,6 +8,7 @@ import indexRouter from './routes/index.js';
 import referenceRouter from './routes/reference.js';
 import metadataRouter from './routes/schema.js';
 import serviceRouter from './routes/service.js';
+import accountsRouter from './routes/accounts.js';
 import { handleError } from './helpers/error.js';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -28,6 +29,7 @@ app.use('/', indexRouter);
 app.use('/services', serviceRouter);
 app.use('/metadata', metadataRouter);
 app.use('/reference', referenceRouter);
+app.use('/accounts', accountsRouter);
 
 app.use('/openapi', express.static(path.join(__dirname, 'swagger.yml')));
 

@@ -83,6 +83,7 @@ echo
 docker run --rm -d \
   -e MONGODB_ATLAS_URI=mongodb://mongodb:27017 \
   -e SCHEMA_BASE_PATH=/usr/src/app/test-schemas \
+  -e ADMIN_API_KEY=test-admin-key \
   --name app -v "$API_DIR/test/assets/test-schemas":/usr/src/app/test-schemas \
   --network dockernet \
   sc_app
@@ -101,4 +102,3 @@ docker run --rm \
              --name sc_test \
              --network dockernet \
              sc_test
-

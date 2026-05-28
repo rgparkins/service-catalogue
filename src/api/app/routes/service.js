@@ -5,13 +5,14 @@ import validator from '../lib/schema-validator.js';
 import mappings from '../lib/mappings.js';
 import _ from 'underscore';
 import MongoDb from '../lib/storage/Mongodb.js';
+import { requireApiKey } from '../lib/auth/apikey.middleware.js';
 
 let storage = new MongoDb();
 
-const _fetch_services = async (req, map) => {
-    let filter = null;
+router.use(requireApiKey);
 
-    let result = await storage.getAllMetadata(global.ServiceStatus.LIVE);
+const _fetch_services = async (req, map) => {
+    let result = await storage.getAllMetadata(global.ServiceStatus.LIVE, req.tenant.tenantId);
 
     if (req.query.team) {
         result = result.filter(doc => {
@@ -91,7 +92,7 @@ router.get('/info', async (req, res) => {
 
 router.get('/metadata/:serviceName/history', async (req, res) => {
     try {
-        let result = await storage.getMetadataHistory(req.params.serviceName);
+        let result = await storage.getMetadataHistory(req.params.serviceName, req.tenant.tenantId);
 
         if (result) {
             res.json(result);
@@ -108,7 +109,7 @@ router.get('/metadata/:serviceName/history', async (req, res) => {
 
 router.get('/metadata/:serviceName', async (req, res) => {
     try {
-        let result = await storage.getMetadata(req.params.serviceName);
+        let result = await storage.getMetadata(req.params.serviceName, req.tenant.tenantId);
 
         if (result && result.service.status === global.ServiceStatus.LIVE) {
             res.json(result);
@@ -142,7 +143,7 @@ router.post('/metadata/:serviceName', (req, res) => {
                     console.log(e);
                 }
 
-                let oldDocument = await storage.putMetadata(req.params.serviceName, schema_version, req.body, hosts);
+                let oldDocument = await storage.putMetadata(req.params.serviceName, schema_version, req.body, hosts, req.tenant.tenantId);
 
                 if (oldDocument) {
                     await storage.addHistoricalDocument(oldDocument);
@@ -171,7 +172,7 @@ router.post('/metadata/:serviceName', (req, res) => {
 
 router.delete('/metadata/:serviceName', async (req, res) => {
     try {
-        let result = await storage.deleteServiceMetadata(req.params.serviceName);
+        let result = await storage.deleteServiceMetadata(req.params.serviceName, req.tenant.tenantId);
 
         if (result) {
             res.status(200)
@@ -190,7 +191,7 @@ router.delete('/metadata/:serviceName', async (req, res) => {
 
 router.get('/decommissioned/:serviceName', async (req, res) => {
     try {
-        let result = await storage.getDecommissionedMetadata(req.params.serviceName);
+        let result = await storage.getMetadata(req.params.serviceName, req.tenant.tenantId);
 
         if (result) {
             res.json(result);
@@ -207,7 +208,7 @@ router.get('/decommissioned/:serviceName', async (req, res) => {
 });
 
 router.get('/decommissioned', async (req, res) => {
-    let result = await storage.getAllMetadata(global.ServiceStatus.DECOMISSIONED);
+    let result = await storage.getAllMetadata(global.ServiceStatus.DECOMISSIONED, req.tenant.tenantId);
 
     if (result) {
         res.json(result);
