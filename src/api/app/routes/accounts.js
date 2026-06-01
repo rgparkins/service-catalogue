@@ -31,6 +31,7 @@ router.post('/', requireAdminKey, async (req, res) => {
             apiKeyHash: hashKey(rawKey),
             plan,
             createdAt: new Date(),
+            apiKeyRotatedAt: new Date(),
             active: true
         });
 
@@ -81,7 +82,7 @@ router.post('/:tenantId/rotate', requireAdminKey, async (req, res) => {
         if (!account) return res.status(404).json({ error: 'Not found' });
 
         const rawKey = generateApiKey();
-        await storage.updateAccount(req.params.tenantId, { apiKeyHash: hashKey(rawKey) });
+        await storage.updateAccount(req.params.tenantId, { apiKeyHash: hashKey(rawKey), apiKeyRotatedAt: new Date() });
 
         res.json({ tenantId: req.params.tenantId, apiKey: rawKey });
     } catch (err) {

@@ -7,8 +7,39 @@
 import app from '../app.js';
 import debugLib from 'debug';
 import http from 'http';
+import crypto from 'crypto';
+import MongoDb from '../lib/storage/Mongodb.js';
 
 const debug = debugLib('revamp:server');
+
+async function seedTenantAccount() {
+  const tenantId = process.env.SEED_TENANT_ID;
+  if (!tenantId) return;
+
+  const companyName = process.env.SEED_TENANT_COMPANY_NAME || tenantId;
+  const billingEmail = process.env.SEED_TENANT_BILLING_EMAIL || 'sandbox@example.com';
+  const rawKey = process.env.SEED_TENANT_API_KEY || `${tenantId}-api-key`;
+  const apiKeyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
+
+  const storage = new MongoDb();
+  const existing = await storage.getAccount(tenantId);
+  if (existing) return;
+
+  await storage.createAccount({
+    tenantId,
+    companyName,
+    billingEmail,
+    apiKeyHash,
+    plan: process.env.SEED_TENANT_PLAN || 'pro',
+    createdAt: new Date(),
+    apiKeyRotatedAt: new Date(),
+    active: true,
+  });
+
+  // Intentionally log the raw key once for local/dev bootstrap.
+  // (This is opt-in via SEED_TENANT_ID.)
+  console.log(`[seed] Created tenant '${tenantId}' with api key: ${rawKey}`);
+}
 
 /**
  * Get port from environment and store in Express.
@@ -16,6 +47,8 @@ const debug = debugLib('revamp:server');
 
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
+
+await seedTenantAccount();
 
 /**
  * Create HTTP server.

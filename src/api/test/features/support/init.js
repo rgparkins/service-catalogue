@@ -47,6 +47,7 @@ Before(async function() {
         apiKeyHash: defaultKeyHash,
         plan: 'pro',
         createdAt: new Date(),
+        apiKeyRotatedAt: new Date(),
         active: true
     });
 

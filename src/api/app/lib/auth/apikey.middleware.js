@@ -7,8 +7,33 @@ const hashKey = (key) => crypto.createHash('sha256').update(key).digest('hex');
 // Protects service routes — requires a valid tenant API key.
 // If ADMIN_API_KEY is not set (dev mode), bypasses auth and uses a default tenant.
 export const requireApiKey = async (req, res, next) => {
+    const startedAt = process.hrtime.bigint();
+    const record = () => {
+        // Only log service update traffic (create/update metadata).
+        // App mounts router at /services, so req.baseUrl is '/services' and req.path is '/metadata/:serviceName'.
+        const isServiceMetadataUpdate =
+            req.baseUrl === '/services' &&
+            req.path.startsWith('/metadata/') &&
+            (req.method === 'POST' || req.method === 'PUT');
+
+        if (!isServiceMetadataUpdate) return;
+        // Avoid logging usage/analytics endpoints even if mounted under /services in the future.
+        if (req.path.startsWith('/usage')) return;
+
+        const durationMs = Number((process.hrtime.bigint() - startedAt) / 1000000n);
+        const tenantId = req.tenant?.tenantId ?? null;
+        storage.recordUsage(tenantId, req.path, req.method, res.statusCode, durationMs)
+            .catch(console.error);
+    };
+
     if (!process.env.ADMIN_API_KEY) {
-        req.tenant = { tenantId: null, companyName: 'Default' };
+        // Dev-mode convenience: allow selecting a tenant via header without API keys.
+        // This keeps local UI simple while production can enforce Bearer keys.
+        const devTenantId = req.headers['x-tenant-id'];
+        req.tenant = devTenantId
+            ? { tenantId: String(devTenantId), companyName: String(devTenantId) }
+            : { tenantId: null, companyName: 'Default' };
+        res.on('finish', record);
         return next();
     }
 
@@ -25,10 +50,7 @@ export const requireApiKey = async (req, res, next) => {
 
         req.tenant = account;
 
-        res.on('finish', () => {
-            storage.recordUsage(account.tenantId, req.path, req.method, res.statusCode)
-                .catch(console.error);
-        });
+        res.on('finish', record);
 
         next();
     } catch (err) {

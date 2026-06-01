@@ -11,7 +11,7 @@ import localServices from '../service-metadata.json';
 const ALL_EVENTS = 'ALL_EVENTS';
 const ALL_SERVICES = 'ALL_SERVICES';
 
-export default function ServiceGraph() {
+export default function ServiceGraph({ metadataUrl = null, tenantId = null } = {}) {
     // Color key filter state (checkboxes)
     const [colorKeyFilter, setColorKeyFilter] = useState({
       recent: true,
@@ -63,6 +63,7 @@ export default function ServiceGraph() {
   const fetchRemote = async (urlOverride, { fallbackToLocal = false } = {}) => {
     const url =
       urlOverride ||
+      metadataUrl ||
       runtimeUrl ||
       import.meta.env.VITE_SERVICE_METADATA_URL;
 
@@ -72,7 +73,14 @@ export default function ServiceGraph() {
     const timeout = setTimeout(() => controller.abort(), 7000);
 
     try {
-      const res = await fetch(url, { signal: controller.signal });
+      const resolvedTenantId =
+        tenantId ||
+        (typeof window !== 'undefined' ? window.localStorage.getItem('SC_TENANT_ID') : null);
+
+      const headers = {};
+      if (resolvedTenantId) headers['x-tenant-id'] = resolvedTenantId;
+
+      const res = await fetch(url, { signal: controller.signal, headers });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       if (!Array.isArray(json)) throw new Error('expected JSON array');

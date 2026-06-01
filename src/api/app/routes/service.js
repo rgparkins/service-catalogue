@@ -6,10 +6,23 @@ import mappings from '../lib/mappings.js';
 import _ from 'underscore';
 import MongoDb from '../lib/storage/Mongodb.js';
 import { requireApiKey } from '../lib/auth/apikey.middleware.js';
+import { createFixedWindowRateLimiter } from '../lib/rate-limit.js';
+import { getPlanLimits } from '../lib/plan-limits.js';
 
 let storage = new MongoDb();
 
 router.use(requireApiKey);
+
+const servicesWriteLimiter = createFixedWindowRateLimiter({
+    windowMs: 60_000,
+    max: (req) => {
+        const override = process.env.RATE_LIMIT_SERVICES_WRITE_PER_MINUTE;
+        if (override) return parseInt(override, 10);
+        return getPlanLimits(req).servicesWritePerMinute;
+    },
+    keyFn: (req) => req.tenant?.tenantId || req.ip || 'anonymous',
+    skipFn: (req) => !(req.method === 'POST' || req.method === 'PUT'),
+});
 
 const _fetch_services = async (req, map) => {
     let result = await storage.getAllMetadata(global.ServiceStatus.LIVE, req.tenant.tenantId);
@@ -125,7 +138,7 @@ router.get('/metadata/:serviceName', async (req, res) => {
     }
 });
 
-router.post('/metadata/:serviceName', (req, res) => {
+router.post('/metadata/:serviceName', servicesWriteLimiter, (req, res) => {
     if (req.params.serviceName != req.body.name) {
         res.status(400)
             .send({error: `Service name does not match ${req.params.serviceName} vs ${req.body.name} (body)`});
@@ -158,6 +171,7 @@ router.post('/metadata/:serviceName', (req, res) => {
                     res.status(202)
                         .send("Accepted");
                 }
+
             } else {
                 res.status(400)
                     .send(err);

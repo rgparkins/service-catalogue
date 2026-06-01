@@ -7,6 +7,10 @@ services:
       test-network:
     environment:
       MONGODB_ATLAS_URI: mongodb://mongodb:27017
+      SEED_TENANT_ID: TalentConsultingSandBox
+      SEED_TENANT_COMPANY_NAME: TalentConsultingSandBox
+      SEED_TENANT_BILLING_EMAIL: sandbox@example.com
+      SEED_TENANT_API_KEY: talent-sandbox-api-key
     depends_on:
       - mongodb
     ports:

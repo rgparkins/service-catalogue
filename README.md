@@ -10,11 +10,11 @@ A Node.js/Express API and web UI for managing metadata about microservices — s
 
 ## Features
 
-- REST API for CRUD operations on services
-- Versioned JSON schema validation
-- MongoDB-backed storage (via Docker)
-- Automated tests (run in Docker)
-- Web UI for graph visualisation
+- Service metadata API (per-tenant)
+- Versioned JSON schema validation + schema management UI
+- MongoDB-backed storage (Docker Compose)
+- Usage stats (requests + latency) for service update endpoints
+- Web UI: landing page, tenant pages, graph, schemas, usage, plans
 
 ⸻
 
@@ -22,8 +22,8 @@ A Node.js/Express API and web UI for managing metadata about microservices — s
 
 ### Prerequisites
 
-- [Docker](https://www.docker.com/) (required for running tests and local development)
-- Node.js (v16+ recommended) and npm (for frontend development only)
+- [Docker](https://www.docker.com/) (recommended for local development + tests)
+- Node.js (for running `src/web` directly, optional if using Docker)
 
 ### Clone the repo
 
@@ -32,15 +32,17 @@ git clone https://github.com/rgparkins/service-catalogue.git
 cd service-catalogue
 ```
 
-### Run the API and MongoDB with Docker Compose
+### Run API + Mongo + Web with Docker Compose
 
 ```sh
-docker-compose up --build
+docker compose up --build
 ```
 
-The API will be available at http://localhost:3000
+Services:
+- API: `http://localhost:3000`
+- Web: `http://localhost:5173`
 
-### Run the Web UI (optional)
+### Run the Web UI without Docker (optional)
 
 ```sh
 cd src/web
@@ -70,112 +72,97 @@ This script will:
 
 ⸻
 
-## API Endpoints
+## Configuration (Env Vars)
 
-See the OpenAPI/Swagger docs in `src/api/app/swagger.yml` for full details.
+### Web
 
-### Health check
+- `SERVICE_METADATA_URL` (host env, used by `docker-compose.yml`): base URL of the API (example: `http://localhost:3000`)
+  - This is passed into the web container as `VITE_SERVICE_METADATA_URL`.
 
-`GET /health`
+### API
 
-Returns: `{ "ok": true }`
+- `MONGODB_ATLAS_URI` (required): MongoDB connection string (Compose uses `mongodb://mongodb:27017`)
+- `ADMIN_API_KEY` (optional): when set, tenant auth is enforced for `/services/*` and admin routes are protected.
+- `SEED_TENANT_ID` (optional): when set, the API seeds a tenant account on startup (dev bootstrap)
+  - `SEED_TENANT_COMPANY_NAME`, `SEED_TENANT_BILLING_EMAIL`, `SEED_TENANT_PLAN`, `SEED_TENANT_API_KEY`
+- Rate limits (optional overrides)
+  - `RATE_LIMIT_VALIDATE_PER_MINUTE`
+  - `RATE_LIMIT_SERVICES_WRITE_PER_MINUTE`
 
-### Create a service
+Plan-based defaults live in `src/api/app/lib/plan-limits.js`.
 
-`POST /services`
+⸻
 
-Body (JSON) — no metadata (server generates that):
+## API Overview
 
-```json
-{
-  "name": "learner-profile-service",
-  "domain": "learning",
-  "team": "core-platform",
-  "events": {
-    "producing": [{ "name": "LearnerProfileUpdated" }],
-    "consuming": [{ "name": "UserAuthenticated" }]
-  },
-  "dependencies": {
-    "critical": [{ "name": "auth-service" }]
-  }
-}
+### Tenant accounts (admin)
+
+These endpoints require `Authorization: Bearer $ADMIN_API_KEY` when `ADMIN_API_KEY` is set:
+
+- `POST /accounts` (creates tenant; returns the raw API key once)
+- `POST /accounts/:tenantId/rotate` (rotates key; returns the new raw API key once)
+- `GET /accounts/:tenantId` (includes `apiKeyRotatedAt`)
+
+### Service metadata (tenant)
+
+These endpoints are per-tenant (tenant selected via API key; in dev mode you can also send `x-tenant-id`):
+
+- `GET /services` (list service names)
+- `GET /services/metadata` (list full service docs)
+- `GET /services/metadata/:serviceName` (get a single service)
+- `POST /services/metadata/:serviceName` (create/update service metadata)
+
+### Schema validation + schemas
+
+- `POST /metadata/validate`
+- `POST /metadata/validate/:version`
+- `GET /metadata/schema/:version` (or `latest`)
+- `GET /metadata/schemas` (list versions + created date + status)
+- `POST /metadata/schemas` (create draft schema)
+- `PUT /metadata/schemas/:version` (edit draft only)
+- `POST /metadata/schemas/:version/live` (set live; supersedes previous live)
+- `DELETE /metadata/schemas/:version` (draft only, and only if never referenced by submissions)
+
+### Usage stats
+
+Usage stats currently record only **service metadata update traffic** (POST/PUT to `/services/metadata/*`) and latency.
+
+- Tenant-scoped (uses tenant API key): `GET /admin/usage` and `GET /admin/usage/timeseries`
+- Admin-scoped (uses admin key): `GET /admin/tenants/:tenantId/usage` and `/timeseries`
+
+⸻
+
+## Rate Limiting (Plan-Aware)
+
+Rate limiting is a simple in-memory fixed-window limiter (per API instance).
+
+Limits are computed from the tenant plan (`req.tenant.plan`) with defaults:
+- `free`
+- `pro` / `company`
+- `enterprise`
+
+See `src/api/app/lib/plan-limits.js` and `src/api/app/lib/rate-limit.js`.
+
+⸻
+
+## Web Pages
+
+- `/` landing page (tenant list + create tenant)
+- `/tenant/:tenantId/schemas` schema list + create/edit (draft only) + make live
+- `/tenant/:tenantId/graph` tenant graph view
+- `/tenant/:tenantId/usage` per-tenant usage dashboard
+- `/tenant/:tenantId/settings` key rotation + last rotated date
+- `/plans` pricing/plans page
+
+⸻
+
+## Handy scripts
+
+Exercise the validate + service metadata endpoints with a payload:
+
+```sh
+TENANT_API_KEY=... ./scripts/exercise_api.sh
 ```
-
-### Replace an existing service
-
-`PUT /services/:name`
-
-Body must match the same service shape (except metadata).
-
-The server will:
-- update `updatedAt`
-- bump the version (e.g., v1 → v2)
-- keep `createdAt` unchanged
-
-### List all services
-
-`GET /services`
-
-### Get a single service
-
-`GET /services/:name`
-
-### Delete a service
-
-`DELETE /services/:name`
-
-⸻
-
-## Schema Validation
-
-Input validation uses JSON Schema (see `src/api/app/schemas/`) and custom middleware.
-
-Any invalid request returns detailed errors.
-
-⸻
-
-## Metadata Rules
-
-Metadata is fully managed by the server:
-
-| Field      | Meaning                                 |
-|------------|-----------------------------------------|
-| createdAt  | Date service was first created (ISO)    |
-| updatedAt  | Last update date (ISO)                  |
-| version    | Semantic increment (v1, v2, v3…)        |
-
-Clients must not include metadata in POST/PUT — requests with metadata will be rejected.
-
-⸻
-
-## Storage
-
-By default, data is stored in MongoDB (via Docker). For local development and testing, MongoDB runs in a container. Data is not persisted between runs unless you mount a volume.
-
-⸻
-
-## Extending
-
-Suggestions:
-- Add query filtering (by domain, team, events)
-- Add pagination to listing
-- Add shareable service graph export
-- Add API docs (OpenAPI/Swagger)
-- Add authentication & RBAC
-
-⸻
-
-## Why a Service Catalogue?
-
-A service catalogue helps you:
-- Visualise service dependencies & events
-- Centralise responsibility and metadata (team, domain, owner)
-- Generate architecture diagrams
-- Enforce governance and metadata consistency
-
-This aligns with industry best practice for microservices and service ownership documentation (e.g., GitHub’s use of service-owner mappings) — centralising info improves clarity and reliability.
-
-⸻
 
 ## License
 

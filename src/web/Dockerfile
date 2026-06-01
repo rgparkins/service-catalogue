@@ -1,5 +1,5 @@
 # Development Dockerfile for Vite-based web app
-FROM node:18-alpine
+FROM node:22-alpine
 
 # Install dependencies needed for building
 RUN apk add --no-cache git curl bash
@@ -8,7 +8,7 @@ WORKDIR /app
 
 # Copy package files and install dependencies
 COPY package*.json ./
-RUN npm ci --silent
+RUN npm install --no-audit --no-fund --legacy-peer-deps
 
 # Copy remaining files
 COPY . .
