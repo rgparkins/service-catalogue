@@ -2,12 +2,12 @@ import fs from 'fs';
 import express from 'express';
 const router = express.Router();
 import validator from '../lib/schema-validator.js';
-import mappings from '../lib/mappings.js';
 import _ from 'underscore';
 import MongoDb from '../lib/storage/Mongodb.js';
 import { requireApiKey } from '../lib/auth/apikey.middleware.js';
 import { createFixedWindowRateLimiter } from '../lib/rate-limit.js';
 import { getPlanLimits } from '../lib/plan-limits.js';
+import { applyRulesets } from '../lib/rulesets.js';
 
 let storage = new MongoDb();
 
@@ -34,9 +34,10 @@ const _fetch_services = async (req, map) => {
     }
 
     if (req.query.pillar) {
-        result = result.filter(doc => {
-            return mappings.isTeamInPillar(req.query.pillar, doc.service.metadata.team);
-        });
+        const pillar = String(req.query.pillar);
+        const teams = await storage.listTeams();
+        const allowedTeams = new Set(teams.filter((t) => t.pillar === pillar).map((t) => t.name));
+        result = result.filter((doc) => allowedTeams.has(doc.service.metadata.team));
     }
 
     if (req.query.repo) {
@@ -145,43 +146,60 @@ router.post('/metadata/:serviceName', servicesWriteLimiter, (req, res) => {
         return;
     }
 
-    validator.validate(req.body, async (success, schema_version, err) => {
+    (async () => {
         try {
-            if (success) {
-                let hosts = []
+            const tenantId = req.tenant?.tenantId ?? null;
+            const rulesets = await storage.listRulesets(tenantId, { includeDisabled: false });
+            const rulesDoc = { service: { name: req.body?.name, metadata: req.body } };
+            const ruleResult = applyRulesets({ rulesets, doc: rulesDoc });
+            if (!ruleResult.ok) {
+                res.status(400).send({ error: 'Ruleset validation failed', violations: ruleResult.errors });
+                return;
+            }
+        } catch (e) {
+            console.log(e);
+            res.status(500).send({ error: 'Ruleset validation error' });
+            return;
+        }
 
-                try {
-                    hosts = global.cache.get(req.params.serviceName.replace('.', '-'));
-                } catch (e) {
-                    console.log(e);
-                }
+        validator.validate(req.body, async (success, schema_version, err) => {
+            try {
+                if (success) {
+                    let hosts = []
 
-                let oldDocument = await storage.putMetadata(req.params.serviceName, schema_version, req.body, hosts, req.tenant.tenantId);
+                    try {
+                        hosts = global.cache.get(req.params.serviceName.replace('.', '-'));
+                    } catch (e) {
+                        console.log(e);
+                    }
 
-                if (oldDocument) {
-                    await storage.addHistoricalDocument(oldDocument);
-                }
+                    let oldDocument = await storage.putMetadata(req.params.serviceName, schema_version, req.body, hosts, req.tenant.tenantId);
 
-                res.set('location', req.originalUrl);
+                    if (oldDocument) {
+                        await storage.addHistoricalDocument(oldDocument);
+                    }
 
-                if (err) { //latest schema validated against
-                    res.status(201)
-                        .send("Created");
+                    res.set('location', req.originalUrl);
+
+                    if (err) { //latest schema validated against
+                        res.status(201)
+                            .send("Created");
+                    } else {
+                        res.status(202)
+                            .send("Accepted");
+                    }
+
                 } else {
-                    res.status(202)
-                        .send("Accepted");
+                    res.status(400)
+                        .send(err);
                 }
-
-            } else {
-                res.status(400)
+            } catch (err) {
+                console.log(err);
+                res.status(500)
                     .send(err);
             }
-        } catch (err) {
-            console.log(err);
-            res.status(500)
-                .send(err);
-        }
-    })
+        })
+    })();
 });
 
 router.delete('/metadata/:serviceName', async (req, res) => {

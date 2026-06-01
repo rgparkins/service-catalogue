@@ -78,11 +78,18 @@ This script will:
 
 - `SERVICE_METADATA_URL` (host env, used by `docker-compose.yml`): base URL of the API (example: `http://localhost:3000`)
   - This is passed into the web container as `VITE_SERVICE_METADATA_URL`.
+- Keycloak (web login)
+  - `VITE_KEYCLOAK_URL` (example: `http://localhost:8080`)
+  - `VITE_KEYCLOAK_REALM` (example: `service-catalogue`)
+  - `VITE_KEYCLOAK_CLIENT_ID` (example: `service-catalogue-web`)
 
 ### API
 
 - `MONGODB_ATLAS_URI` (required): MongoDB connection string (Compose uses `mongodb://mongodb:27017`)
 - `ADMIN_API_KEY` (optional): when set, tenant auth is enforced for `/services/*` and admin routes are protected.
+- Keycloak (API JWT verification for UI-only endpoints)
+  - `KEYCLOAK_ISSUER` (example: `http://keycloak:8080/realms/service-catalogue`)
+  - `KEYCLOAK_AUDIENCE` (example: `service-catalogue-api`)
 - `SEED_TENANT_ID` (optional): when set, the API seeds a tenant account on startup (dev bootstrap)
   - `SEED_TENANT_COMPANY_NAME`, `SEED_TENANT_BILLING_EMAIL`, `SEED_TENANT_PLAN`, `SEED_TENANT_API_KEY`
 - Rate limits (optional overrides)
@@ -129,6 +136,7 @@ Usage stats currently record only **service metadata update traffic** (POST/PUT 
 
 - Tenant-scoped (uses tenant API key): `GET /admin/usage` and `GET /admin/usage/timeseries`
 - Admin-scoped (uses admin key): `GET /admin/tenants/:tenantId/usage` and `/timeseries`
+- User-scoped (uses Keycloak access token): `GET /admin/ui/tenants/:tenantId/usage` and `/timeseries`
 
 ⸻
 
@@ -147,12 +155,31 @@ See `src/api/app/lib/plan-limits.js` and `src/api/app/lib/rate-limit.js`.
 
 ## Web Pages
 
-- `/` landing page (tenant list + create tenant)
+- `/` landing page (about/pricing + login)
+- `/tenants` tenant list (Keycloak login required)
+- `/register` create tenant registration (public)
 - `/tenant/:tenantId/schemas` schema list + create/edit (draft only) + make live
 - `/tenant/:tenantId/graph` tenant graph view
 - `/tenant/:tenantId/usage` per-tenant usage dashboard
 - `/tenant/:tenantId/settings` key rotation + last rotated date
+- `/tenant/:tenantId/rulesets` manage per-tenant regex rulesets
+- `/tenant/:tenantId/users` tenant users + invites (Keycloak login required; tenant admin or global admin)
+- `/invites` accept pending invites (Keycloak login required)
 - `/plans` pricing/plans page
+- `/admin/users` user management (Keycloak login required; global admin only)
+
+### Keycloak roles/groups
+
+- Realm role: `global-admin` (can manage all tenants)
+- Tenant admin group: `tenant:<tenantId>:admin` (or `/tenant:<tenantId>:admin`)
+
+### Self-serve tenant signup (optional)
+
+The landing page includes a “Create tenant” form that calls `POST /public/signup` to:
+- create the tenant account in MongoDB
+- create a Keycloak user (email as username)
+- add the user to the tenant-admin group `tenant:<tenantId>:admin`
+- trigger Keycloak to email a password setup link (requires Keycloak SMTP configuration)
 
 ⸻
 

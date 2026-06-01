@@ -5,6 +5,7 @@ import MongoDb from '../lib/storage/Mongodb.js';
 import { requireApiKey } from '../lib/auth/apikey.middleware.js';
 import { createFixedWindowRateLimiter } from '../lib/rate-limit.js';
 import { getPlanLimits } from '../lib/plan-limits.js';
+import { applyRulesets } from '../lib/rulesets.js';
 
 const storage = new MongoDb();
 
@@ -140,37 +141,66 @@ router.get('/schema/:version?', (req, res) => {
 });
 
 router.post('/validate/:version', validateLimiter, (req, res) => {
-    if (validator.fetchSchema(req.params.version)) {
+    (async () => {
+        if (!validator.fetchSchema(req.params.version)) {
+            res.status(404).send('Not found');
+            return;
+        }
+
+        try {
+            const tenantId = req.tenant?.tenantId ?? null;
+            const rulesets = await storage.listRulesets(tenantId, { includeDisabled: false });
+            const rulesDoc = { service: { name: req.body?.name, metadata: req.body } };
+            const ruleResult = applyRulesets({ rulesets, doc: rulesDoc });
+            if (!ruleResult.ok) {
+                res.status(400).json({ error: 'Ruleset validation failed', violations: ruleResult.errors });
+                return;
+            }
+        } catch (e) {
+            console.error(e);
+            res.status(500).json({ error: 'Ruleset validation error' });
+            return;
+        }
+
         validator.validateAgainstVersion(req.body, req.params.version, (success, result) => {
             if (success) {
-                res.status(200)
-                    .send('OK')
+                res.status(200).send('OK');
             } else {
-                res.status(400)
-                    .json(result);
+                res.status(400).json(result);
             }
-
-        })
-    } else {
-        res.status(404).send('Not found');
-    }
+        });
+    })();
 });
 
 router.post('/validate', validateLimiter, (req, res) => {
-    validator.validate(req.body, (success, version, result) => {
-        if (success) {
-            if (result) {
-                res.status(200)
-                    .send('OK')
-            } else {
-                res.status(202)
-                    .send('Accepted')
+    (async () => {
+        try {
+            const tenantId = req.tenant?.tenantId ?? null;
+            const rulesets = await storage.listRulesets(tenantId, { includeDisabled: false });
+            const rulesDoc = { service: { name: req.body?.name, metadata: req.body } };
+            const ruleResult = applyRulesets({ rulesets, doc: rulesDoc });
+            if (!ruleResult.ok) {
+                res.status(400).json({ error: 'Ruleset validation failed', violations: ruleResult.errors });
+                return;
             }
-        } else {
-            res.status(400)
-                .json(result);
+        } catch (e) {
+            console.error(e);
+            res.status(500).json({ error: 'Ruleset validation error' });
+            return;
         }
-    })
+
+        validator.validate(req.body, (success, version, result) => {
+            if (success) {
+                if (result) {
+                    res.status(200).send('OK');
+                } else {
+                    res.status(202).send('Accepted');
+                }
+            } else {
+                res.status(400).json(result);
+            }
+        });
+    })();
 });
 
 export default router;

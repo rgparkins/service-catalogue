@@ -11,7 +11,7 @@ import localServices from '../service-metadata.json';
 const ALL_EVENTS = 'ALL_EVENTS';
 const ALL_SERVICES = 'ALL_SERVICES';
 
-export default function ServiceGraph({ metadataUrl = null, tenantId = null } = {}) {
+export default function ServiceGraph({ metadataUrl = null, tenantId = null, embedded = false } = {}) {
     // Color key filter state (checkboxes)
     const [colorKeyFilter, setColorKeyFilter] = useState({
       recent: true,
@@ -418,8 +418,10 @@ export default function ServiceGraph({ metadataUrl = null, tenantId = null } = {
     <div
       style={{
         display: 'flex',
-        width: '100vw',
-        height: '100vh',
+        width: embedded ? '100%' : '100vw',
+        height: embedded ? '100%' : '100vh',
+        minHeight: embedded ? 640 : undefined,
+        overflow: 'hidden',
         background: '#020617',
         color: '#e5e7eb',
         fontFamily:

@@ -1,4 +1,19 @@
 services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.0
+    container_name: keycloak
+    command:
+      - start-dev
+      - --import-realm
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    volumes:
+      - ./keycloak/realm-service-catalogue.json:/opt/keycloak/data/import/realm-service-catalogue.json:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - test-network
   app:
     container_name: app
     build:
@@ -11,8 +26,17 @@ services:
       SEED_TENANT_COMPANY_NAME: TalentConsultingSandBox
       SEED_TENANT_BILLING_EMAIL: sandbox@example.com
       SEED_TENANT_API_KEY: talent-sandbox-api-key
+      KEYCLOAK_ISSUER: http://keycloak:8080/realms/service-catalogue
+      KEYCLOAK_AUDIENCE: service-catalogue-api
+      KEYCLOAK_ADMIN_URL: http://keycloak:8080
+      KEYCLOAK_REALM: service-catalogue
+      KEYCLOAK_ADMIN_USER: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_WEB_CLIENT_ID: service-catalogue-web
+      PUBLIC_APP_URL: http://localhost:5173
     depends_on:
       - mongodb
+      - keycloak
     ports:
       - "3000:3000"
   mongodb:
@@ -49,6 +73,9 @@ services:
     environment:
       - NODE_ENV=development
       - VITE_SERVICE_METADATA_URL=${SERVICE_METADATA_URL}
+      - VITE_KEYCLOAK_URL=http://localhost:8080
+      - VITE_KEYCLOAK_REALM=service-catalogue
+      - VITE_KEYCLOAK_CLIENT_ID=service-catalogue-web
     networks:
       - test-network
 networks:

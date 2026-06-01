@@ -1,6 +1,7 @@
 import mongodb from 'mongodb';
 const { MongoClient } = mongodb;
 import { ErrorHandler } from '../../helpers/error.js';
+import crypto from 'crypto';
 
 let config = {
     connection_string: process.env.MONGODB_ATLAS_URI,
@@ -42,6 +43,30 @@ const loadDB = async () => {
 
 function MongoDb() {
     const tenantFilter = (tenantId) => tenantId ? { tenantId } : {};
+
+    const DEFAULT_PILLARS = {
+        Account: ["Newton", "Einstein", "Curie", "Darwin", "Fermi"],
+        Data: ["Data Science", "Data Insights", "Data Platforms", "Data Governance"],
+    };
+
+    const ensureTeamsSeeded = async () => {
+        const db = await loadDB();
+        const existing = await db.collection('teams').countDocuments({}).catch(err => {
+            global.db_connection = null;
+            throw new ErrorHandler(500, err);
+        });
+        if (existing > 0) return;
+
+        const docs = [];
+        Object.keys(DEFAULT_PILLARS).forEach((pillar) => {
+            DEFAULT_PILLARS[pillar].forEach((name) => docs.push({ name, pillar }));
+        });
+        if (docs.length === 0) return;
+        await db.collection('teams').insertMany(docs).catch(err => {
+            global.db_connection = null;
+            throw new ErrorHandler(500, err);
+        });
+    };
 
     this.putMetadata = async (serviceName, schema_version, data, hosts, tenantId) => {
         let db = await loadDB();
@@ -143,6 +168,35 @@ function MongoDb() {
 
     this.health = async () => {
         await loadDB();
+    };
+
+    // --- Reference data (teams/pillars) ---
+
+    this.listTeams = async () => {
+        await ensureTeamsSeeded();
+        const db = await loadDB();
+        return await db.collection('teams').find({})
+            .project({ _id: 0 })
+            .sort({ pillar: 1, name: 1 })
+            .toArray()
+            .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+    };
+
+    this.getPillars = async () => {
+        const teams = await this.listTeams();
+        return teams.reduce((acc, t) => {
+            acc[t.pillar] = acc[t.pillar] || [];
+            acc[t.pillar].push(t.name);
+            return acc;
+        }, {});
+    };
+
+    this.isTeamInPillar = async (pillar, team) => {
+        await ensureTeamsSeeded();
+        const db = await loadDB();
+        const row = await db.collection('teams').findOne({ pillar, name: team }, { projection: { _id: 0 } })
+            .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+        return !!row;
     };
 
     // --- Account management ---
@@ -418,6 +472,165 @@ function MongoDb() {
         });
 
         return series;
+    };
+
+    // --- User management (minimal) ---
+
+    this.upsertUser = async ({ sub, email, name, createdAt = new Date(), lastSeenAt = new Date() }) => {
+        let db = await loadDB();
+        const result = await db.collection("users").findOneAndUpdate(
+            { sub },
+            {
+                $set: { email, name, lastSeenAt },
+                $setOnInsert: { createdAt, sub }
+            },
+            { upsert: true, returnOriginal: false, projection: { _id: 0 } }
+        ).catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+        return result.value;
+    };
+
+    this.listUsers = async () => {
+        let db = await loadDB();
+        return await db.collection("users").find({})
+            .project({ _id: 0 })
+            .sort({ createdAt: -1 })
+            .toArray()
+            .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+    };
+
+    this.assignUserToTenant = async ({ sub, tenantId, role }) => {
+        let db = await loadDB();
+        await db.collection("tenant_users").updateOne(
+            { tenantId, sub },
+            {
+                $set: { role, updatedAt: new Date() },
+                $setOnInsert: { createdAt: new Date(), tenantId, sub }
+            },
+            { upsert: true }
+        ).catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+    };
+
+    this.listTenantUsers = async (tenantId) => {
+        let db = await loadDB();
+        const links = await db.collection("tenant_users").find({ tenantId })
+            .project({ _id: 0, sub: 1, role: 1, createdAt: 1 })
+            .toArray()
+            .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+
+        const subs = links.map((l) => l.sub);
+        const users = subs.length
+            ? await db.collection("users").find({ sub: { $in: subs } })
+                .project({ _id: 0, sub: 1, email: 1, name: 1 })
+                .toArray()
+            : [];
+        const bySub = new Map(users.map((u) => [u.sub, u]));
+
+        return links.map((l) => ({ ...l, user: bySub.get(l.sub) || { sub: l.sub } }));
+    };
+
+    this.createInvite = async ({ tenantId, email, role, invitedBySub }) => {
+        let db = await loadDB();
+        const token = crypto.randomBytes(24).toString('hex');
+        const invite = {
+            tenantId,
+            email: String(email).toLowerCase(),
+            role,
+            token,
+            status: 'pending',
+            invitedBySub,
+            createdAt: new Date()
+        };
+        await db.collection("invites").insertOne(invite)
+            .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+        return { tenantId, email: invite.email, role, token, status: invite.status, createdAt: invite.createdAt };
+    };
+
+    this.listInvitesForEmail = async (email) => {
+        let db = await loadDB();
+        return await db.collection("invites").find({ email: String(email).toLowerCase(), status: 'pending' })
+            .project({ _id: 0 })
+            .sort({ createdAt: -1 })
+            .toArray()
+            .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+    };
+
+    this.listInvitesForTenant = async (tenantId) => {
+        let db = await loadDB();
+        return await db.collection("invites").find({ tenantId, status: 'pending' })
+            .project({ _id: 0 })
+            .sort({ createdAt: -1 })
+            .toArray()
+            .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+    };
+
+    this.listUserTenants = async (sub) => {
+        let db = await loadDB();
+        return await db.collection("tenant_users").find({ sub })
+            .project({ _id: 0, tenantId: 1, role: 1, createdAt: 1 })
+            .sort({ tenantId: 1 })
+            .toArray()
+            .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+    };
+
+    this.acceptInvite = async ({ token, sub, email }) => {
+        let db = await loadDB();
+        const invite = await db.collection("invites").findOneAndUpdate(
+            { token, status: 'pending', ...(email ? { email: String(email).toLowerCase() } : {}) },
+            { $set: { status: 'accepted', acceptedAt: new Date(), acceptedBySub: sub } },
+            { returnOriginal: false, projection: { _id: 0 } }
+        ).catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+        return invite.value;
+    };
+
+    // --- Rulesets (per-tenant field/regex checks) ---
+
+    this.listRulesets = async (tenantId, { includeDisabled = true } = {}) => {
+        let db = await loadDB();
+        const query = { tenantId, ...(includeDisabled ? {} : { enabled: true }) };
+        return await db.collection("rulesets").find(query)
+            .project({ _id: 0 })
+            .sort({ createdAt: -1 })
+            .toArray()
+            .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+    };
+
+    this.createRuleset = async ({ tenantId, name, field, pattern, enabled = true, description = '' }) => {
+        let db = await loadDB();
+        const doc = {
+            tenantId,
+            id: crypto.randomBytes(12).toString('hex'),
+            name,
+            field,
+            pattern,
+            enabled: !!enabled,
+            description: description || '',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        };
+        await db.collection("rulesets").insertOne(doc)
+            .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+        const { tenantId: _t, ...rest } = doc;
+        return rest;
+    };
+
+    this.updateRuleset = async (tenantId, id, updates) => {
+        let db = await loadDB();
+        const allowed = ['name', 'field', 'pattern', 'enabled', 'description'];
+        const $set = Object.fromEntries(Object.entries(updates || {}).filter(([k]) => allowed.includes(k)));
+        $set.updatedAt = new Date();
+        const result = await db.collection("rulesets").findOneAndUpdate(
+            { tenantId, id },
+            { $set },
+            { returnOriginal: false, projection: { _id: 0 } }
+        ).catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+        return result.value;
+    };
+
+    this.deleteRuleset = async (tenantId, id) => {
+        let db = await loadDB();
+        const result = await db.collection("rulesets").deleteOne({ tenantId, id })
+            .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+        return result.deletedCount > 0;
     };
 }
 

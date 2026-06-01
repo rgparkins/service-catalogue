@@ -1,15 +1,12 @@
 import fs from 'fs';
 import Ajv from 'ajv';
 import _ from 'underscore';
-import mappings from '../mappings.js';
-import ServiceNameValidator from './servicename-validator,middleware.js';
 import MongoDb from '../storage/Mongodb.js';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const draft6 = require('ajv/lib/refs/json-schema-draft-06.json');
 
 const ajv = new Ajv({allErrors: true});
-const serviceNameValidator = new ServiceNameValidator();
 
 ajv.addMetaSchema(draft6);
 
@@ -84,14 +81,7 @@ class SchemaValidatorMiddleware {
         let valid = schema.ajv(json);
 
         if (valid) {
-            if (serviceNameValidator.validateServiceName(json.name)) {
-                cb(true);
-            } else {
-                cb(false, {
-                    "error": "Please use a valid domain for your service",
-                    "domains": serviceNameValidator.domains
-                });
-            }
+            cb(true);
         } else {
             cb(false, schema.ajv.errors);
         }
@@ -116,14 +106,7 @@ class SchemaValidatorMiddleware {
         }
 
         if (isValid) {
-            if (serviceNameValidator.validateServiceName(json.name)) {
-                cb(true, schemaVersion, isValidWithLatest);
-            } else {
-                cb(false, false, {
-                    "error": "Please use a valid domain for your service",
-                    "domains": serviceNameValidator.domains
-                });
-            }
+            cb(true, schemaVersion, isValidWithLatest);
         } else {
             this.schemas[0].ajv(json);
 
@@ -219,7 +202,11 @@ class SchemaValidatorMiddleware {
     _populateTeam(data) {
         if (!data || !data.properties) return data;
         if (data.properties.team) {
-            data.properties.team.enum = mappings.getDistinctTeams();
+            // Schemas historically used mappings-driven enums. Now that teams are managed
+            // outside the schema, remove any enum restriction to avoid blocking valid payloads.
+            if (Array.isArray(data.properties.team.enum)) {
+                delete data.properties.team.enum;
+            }
         }
         return data;
     }
