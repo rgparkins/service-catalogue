@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-docker-compose up app mongodb web keycloak
+docker-compose up app mongodb web keycloak mongo-express

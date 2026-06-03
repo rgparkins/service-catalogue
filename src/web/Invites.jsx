@@ -8,6 +8,13 @@ export default function Invites() {
   const [invites, setInvites] = React.useState([]);
   const [error, setError] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
+  const inviteTokenFromUrl = React.useMemo(() => {
+    try {
+      return new URLSearchParams(window.location.search).get('token') || '';
+    } catch {
+      return '';
+    }
+  }, []);
 
   const load = async () => {
     setLoading(true);
@@ -31,6 +38,14 @@ export default function Invites() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.ready, auth.authenticated]);
 
+  React.useEffect(() => {
+    if (!auth.ready) return;
+    if (!auth.authenticated) return;
+    if (!inviteTokenFromUrl) return;
+    accept(inviteTokenFromUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.ready, auth.authenticated, inviteTokenFromUrl]);
+
   const accept = async (token) => {
     setLoading(true);
     try {
@@ -46,7 +61,13 @@ export default function Invites() {
   };
 
   if (!auth.ready) return null;
-  if (!auth.authenticated) return <Login />;
+  if (!auth.authenticated) {
+    if (inviteTokenFromUrl) {
+      window.location.replace(`/invite/complete?token=${encodeURIComponent(inviteTokenFromUrl)}`);
+      return null;
+    }
+    return <Login />;
+  }
 
   return (
     <div className="bg-light min-vh-100">
@@ -100,4 +121,3 @@ export default function Invites() {
     </div>
   );
 }
-

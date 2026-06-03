@@ -474,16 +474,20 @@ function MongoDb() {
         return series;
     };
 
-    // --- User management (minimal) ---
+    // --- User management (single collection) ---
 
-    this.upsertUser = async ({ sub, email, name, createdAt = new Date(), lastSeenAt = new Date() }) => {
+    // Users are keyed by email; Keycloak subject (`sub`) is attached once the user logs in.
+    this.upsertUser = async ({ sub = null, email, name = null, createdAt = new Date(), lastSeenAt = new Date() }) => {
         let db = await loadDB();
+        const normalized = String(email || '').trim().toLowerCase();
+        if (!normalized) throw new ErrorHandler(400, 'email is required');
+
+        const $set = { email: normalized, name: name || null, lastSeenAt };
+        if (sub) $set.sub = sub;
+
         const result = await db.collection("users").findOneAndUpdate(
-            { sub },
-            {
-                $set: { email, name, lastSeenAt },
-                $setOnInsert: { createdAt, sub }
-            },
+            { email: normalized },
+            { $set, $setOnInsert: { createdAt } },
             { upsert: true, returnOriginal: false, projection: { _id: 0 } }
         ).catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
         return result.value;
@@ -498,34 +502,63 @@ function MongoDb() {
             .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
     };
 
-    this.assignUserToTenant = async ({ sub, tenantId, role }) => {
+    // Tenant access is stored on the user document (single users collection).
+    // Each user document has `tenantAccess: [{ tenantId, role, createdAt, updatedAt }]`.
+    this.assignUserToTenant = async ({ email, tenantId, role }) => {
         let db = await loadDB();
-        await db.collection("tenant_users").updateOne(
-            { tenantId, sub },
-            {
-                $set: { role, updatedAt: new Date() },
-                $setOnInsert: { createdAt: new Date(), tenantId, sub }
-            },
-            { upsert: true }
+        const normalized = String(email || '').trim().toLowerCase();
+        if (!normalized) throw new ErrorHandler(400, 'email is required');
+        if (!tenantId) throw new ErrorHandler(400, 'tenantId is required');
+
+        // Ensure base user exists.
+        await this.upsertUser({ email: normalized });
+
+        const now = new Date();
+        const updated = await db.collection("users").updateOne(
+            { email: normalized, "tenantAccess.tenantId": tenantId },
+            { $set: { "tenantAccess.$.role": role, "tenantAccess.$.updatedAt": now } }
         ).catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+
+        if (updated.matchedCount === 0) {
+            await db.collection("users").updateOne(
+                { email: normalized },
+                { $push: { tenantAccess: { tenantId, role, createdAt: now, updatedAt: now } } }
+            ).catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+        }
     };
 
     this.listTenantUsers = async (tenantId) => {
         let db = await loadDB();
-        const links = await db.collection("tenant_users").find({ tenantId })
-            .project({ _id: 0, sub: 1, role: 1, createdAt: 1 })
-            .toArray()
-            .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+        const rows = await db.collection("users").aggregate([
+            { $match: { "tenantAccess.tenantId": tenantId } },
+            {
+                $project: {
+                    _id: 0,
+                    email: 1,
+                    sub: 1,
+                    name: 1,
+                    tenantAccess: {
+                        $filter: {
+                            input: "$tenantAccess",
+                            as: "ta",
+                            cond: { $eq: ["$$ta.tenantId", tenantId] }
+                        }
+                    }
+                }
+            }
+        ]).toArray().catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
 
-        const subs = links.map((l) => l.sub);
-        const users = subs.length
-            ? await db.collection("users").find({ sub: { $in: subs } })
-                .project({ _id: 0, sub: 1, email: 1, name: 1 })
-                .toArray()
-            : [];
-        const bySub = new Map(users.map((u) => [u.sub, u]));
-
-        return links.map((l) => ({ ...l, user: bySub.get(l.sub) || { sub: l.sub } }));
+        return rows.map((u) => {
+            const access = (u.tenantAccess && u.tenantAccess[0]) || null;
+            return {
+                email: u.email,
+                sub: u.sub,
+                name: u.name,
+                tenantId,
+                role: access?.role || null,
+                createdAt: access?.createdAt || null,
+            };
+        });
     };
 
     this.createInvite = async ({ tenantId, email, role, invitedBySub }) => {
@@ -554,6 +587,22 @@ function MongoDb() {
             .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
     };
 
+    this.getInviteByToken = async (token) => {
+        let db = await loadDB();
+        return await db.collection("invites").findOne({ token, status: 'pending' }, { projection: { _id: 0 } })
+            .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+    };
+
+    this.acceptInviteByEmail = async ({ token, email, keycloakUserId = null }) => {
+        let db = await loadDB();
+        const invite = await db.collection("invites").findOneAndUpdate(
+            { token, status: 'pending', email: String(email).trim().toLowerCase() },
+            { $set: { status: 'accepted', acceptedAt: new Date(), acceptedByEmail: String(email).trim().toLowerCase(), keycloakUserId } },
+            { returnOriginal: false, projection: { _id: 0 } }
+        ).catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+        return invite.value;
+    };
+
     this.listInvitesForTenant = async (tenantId) => {
         let db = await loadDB();
         return await db.collection("invites").find({ tenantId, status: 'pending' })
@@ -563,13 +612,18 @@ function MongoDb() {
             .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
     };
 
-    this.listUserTenants = async (sub) => {
+    this.listUserTenantsByEmail = async (email) => {
         let db = await loadDB();
-        return await db.collection("tenant_users").find({ sub })
-            .project({ _id: 0, tenantId: 1, role: 1, createdAt: 1 })
-            .sort({ tenantId: 1 })
-            .toArray()
-            .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+        const normalized = String(email || '').trim().toLowerCase();
+        if (!normalized) return [];
+        const user = await db.collection("users").findOne(
+            { email: normalized },
+            { projection: { _id: 0, tenantAccess: 1 } }
+        ).catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+        const access = Array.isArray(user?.tenantAccess) ? user.tenantAccess : [];
+        return access
+            .map((a) => ({ tenantId: a.tenantId, role: a.role, createdAt: a.createdAt, updatedAt: a.updatedAt }))
+            .sort((a, b) => String(a.tenantId).localeCompare(String(b.tenantId)));
     };
 
     this.acceptInvite = async ({ token, sub, email }) => {
@@ -580,6 +634,50 @@ function MongoDb() {
             { returnOriginal: false, projection: { _id: 0 } }
         ).catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
         return invite.value;
+    };
+
+    this.createRegistration = async ({ tenantId, email, name = null, role = 'admin' }) => {
+        let db = await loadDB();
+        const token = crypto.randomBytes(24).toString('hex');
+        const reg = {
+            token,
+            tenantId,
+            email: String(email).trim().toLowerCase(),
+            name: name || null,
+            role,
+            status: 'pending',
+            createdAt: new Date(),
+        };
+        await db.collection("registrations").insertOne(reg)
+            .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+        return { token, tenantId, email: reg.email, name: reg.name, role: reg.role, status: reg.status, createdAt: reg.createdAt };
+    };
+
+    this.getRegistration = async (token) => {
+        let db = await loadDB();
+        return await db.collection("registrations").findOne({ token }, { projection: { _id: 0 } })
+            .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+    };
+
+    this.completeRegistration = async ({ token, keycloakUserId }) => {
+        let db = await loadDB();
+        const result = await db.collection("registrations").findOneAndUpdate(
+            { token, status: 'pending' },
+            { $set: { status: 'completed', completedAt: new Date(), keycloakUserId: keycloakUserId || null } },
+            { returnOriginal: false, projection: { _id: 0 } }
+        ).catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+        return result.value;
+    };
+
+    this.attachSubToEmailTenants = async ({ sub, email }) => {
+        let db = await loadDB();
+        const normalized = String(email || '').trim().toLowerCase();
+        if (!normalized || !sub) return 0;
+        const result = await db.collection("users").updateOne(
+            { email: normalized },
+            { $set: { sub, updatedAt: new Date() } }
+        ).catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+        return result.modifiedCount || 0;
     };
 
     // --- Rulesets (per-tenant field/regex checks) ---

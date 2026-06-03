@@ -177,9 +177,9 @@ See `src/api/app/lib/plan-limits.js` and `src/api/app/lib/rate-limit.js`.
 
 The landing page includes a “Create tenant” form that calls `POST /public/signup` to:
 - create the tenant account in MongoDB
-- create a Keycloak user (email as username)
-- add the user to the tenant-admin group `tenant:<tenantId>:admin`
-- trigger Keycloak to email a password setup link (requires Keycloak SMTP configuration)
+- create the user profile in MongoDB and generate a registration token
+- send an email with a registration link (requires SMTP configuration)
+- when the user completes registration, the backend creates the Keycloak user and adds them to `tenant:<tenantId>:admin`
 
 ⸻
 

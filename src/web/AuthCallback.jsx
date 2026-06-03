@@ -1,5 +1,5 @@
 import React from 'react';
-import { handleAuthCallback } from './auth/AuthProvider.jsx';
+import { handleAuthCallback, resetAuthStorage } from './auth/AuthProvider.jsx';
 
 export default function AuthCallback() {
   const [error, setError] = React.useState(null);
@@ -10,6 +10,14 @@ export default function AuthCallback() {
         await handleAuthCallback();
         window.location.assign('/tenants');
       } catch (e) {
+        const msg = String(e?.message || e || '');
+        // If someone lands here without starting a login (or after a logout redirect),
+        // don't strand them on a broken callback page.
+        if (msg.includes('Missing PKCE state') || msg.includes('Invalid auth callback')) {
+          resetAuthStorage();
+          window.location.replace('/login');
+          return;
+        }
         setError(e);
       }
     })();
@@ -34,4 +42,3 @@ export default function AuthCallback() {
     </div>
   );
 }
-

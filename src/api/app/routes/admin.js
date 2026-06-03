@@ -104,11 +104,44 @@ router.get('/usage/timeseries', requireApiKey, async (req, res) => {
   }
 });
 
+// Returns the tenants the currently-authenticated user has access to.
+// Checks the DB first, then falls back to JWT group claims (if the Keycloak
+// groups mapper is configured). JWT-derived entries are synced to the DB so
+// subsequent logins don't rely on the mapper being present.
+router.get('/ui/me/tenants', requireUser, async (req, res) => {
+  try {
+    const email = String(req.user?.email || '').toLowerCase();
+
+    // Source 1: DB tenant memberships (populated via registration/invite flows)
+    const dbTenants = email ? await storage.listUserTenantsByEmail(email) : [];
+    const dbTenantIds = new Set(dbTenants.map((t) => t.tenantId));
+
+    // Source 2: JWT group claims — present only when Keycloak groups mapper is configured.
+    // Groups arrive as "tenant:<id>:<role>" or "/tenant:<id>:<role>".
+    const jwtGroups = Array.isArray(req.user?.groups) ? req.user.groups : [];
+    for (const g of jwtGroups) {
+      const m = String(g).replace(/^\//, '').match(/^tenant:([^:]+):(.+)$/);
+      if (!m) continue;
+      const [, tenantId, role] = m;
+      if (!dbTenantIds.has(tenantId) && email) {
+        await storage.assignUserToTenant({ email, tenantId, role }).catch(console.error);
+        dbTenants.push({ tenantId, role });
+        dbTenantIds.add(tenantId);
+      }
+    }
+
+    res.json(dbTenants);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load user tenants' });
+  }
+});
+
 // User-authenticated usage endpoints (Keycloak). Authorizes per-tenant admin or global-admin.
 router.get('/ui/tenants/:tenantId/usage', requireUser, async (req, res) => {
   try {
     const tenantId = req.params.tenantId;
-    const ok = userHasRole(req.user, 'global-admin') || userHasTenantAdmin(req.user, tenantId);
+    const ok = userHasRole(req.user, 'admin') || userHasRole(req.user, 'global-admin') || userHasTenantAdmin(req.user, tenantId);
     if (!ok) return res.status(403).json({ error: 'Forbidden' });
 
     const now = new Date();
@@ -127,7 +160,7 @@ router.get('/ui/tenants/:tenantId/usage', requireUser, async (req, res) => {
 router.get('/ui/tenants/:tenantId/usage/timeseries', requireUser, async (req, res) => {
   try {
     const tenantId = req.params.tenantId;
-    const ok = userHasRole(req.user, 'global-admin') || userHasTenantAdmin(req.user, tenantId);
+    const ok = userHasRole(req.user, 'admin') || userHasRole(req.user, 'global-admin') || userHasTenantAdmin(req.user, tenantId);
     if (!ok) return res.status(403).json({ error: 'Forbidden' });
 
     const now = new Date();

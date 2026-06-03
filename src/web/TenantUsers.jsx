@@ -11,7 +11,7 @@ export default function TenantUsers({ tenantId }) {
   const [error, setError] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
   const [inviteEmail, setInviteEmail] = React.useState('');
-  const [inviteRole, setInviteRole] = React.useState('member');
+  const [inviteRole, setInviteRole] = React.useState('tenant-user');
   const [createdInvite, setCreatedInvite] = React.useState(null);
 
   const canManage = hasGlobalAdmin(auth.tokenParsed) || hasTenantAdmin(auth.tokenParsed, tenantId);
@@ -134,6 +134,7 @@ export default function TenantUsers({ tenantId }) {
               )}
             </div>
           </div>
+
         </div>
 
         <div className="col-12 col-lg-6">
@@ -192,8 +193,8 @@ export default function TenantUsers({ tenantId }) {
                     onChange={(e) => setInviteRole(e.target.value)}
                     disabled={!canManage || loading}
                   >
-                    <option value="member">Member</option>
-                    <option value="admin">Admin</option>
+                    <option value="tenant-user">Tenant user</option>
+                    <option value="tenant-admin">Tenant admin</option>
                   </select>
                 </div>
                 <div className="col-12 col-md-6">
@@ -212,4 +213,3 @@ export default function TenantUsers({ tenantId }) {
     </TenantLayout>
   );
 }
-

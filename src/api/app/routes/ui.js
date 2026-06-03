@@ -17,7 +17,7 @@ function pickUserProfileFromToken(user) {
 }
 
 function requireTenantAdminOrGlobal(req, res, tenantId) {
-  const ok = userHasRole(req.user, 'global-admin') || userHasTenantAdmin(req.user, tenantId);
+  const ok = userHasRole(req.user, 'admin') || userHasRole(req.user, 'global-admin') || userHasTenantAdmin(req.user, tenantId);
   if (!ok) {
     res.status(403).json({ error: 'Forbidden' });
     return false;
@@ -36,7 +36,11 @@ router.get('/me', requireUser, async (req, res) => {
       name: profile.name,
     });
 
-    const tenantAssignments = await storage.listUserTenants(profile.sub);
+    if (profile.email) {
+      await storage.attachSubToEmailTenants({ sub: profile.sub, email: profile.email });
+    }
+
+    const tenantAssignments = await storage.listUserTenantsByEmail(profile.email);
 
     return res.status(200).json({
       user: userDoc,
@@ -52,7 +56,7 @@ router.get('/me', requireUser, async (req, res) => {
 
 router.get('/users', requireUser, async (req, res) => {
   try {
-    if (!userHasRole(req.user, 'global-admin')) return res.status(403).json({ error: 'Forbidden' });
+    if (!userHasRole(req.user, 'admin') && !userHasRole(req.user, 'global-admin')) return res.status(403).json({ error: 'Forbidden' });
     const users = await storage.listUsers();
     return res.status(200).json({ users });
   } catch (err) {
@@ -84,14 +88,27 @@ router.post('/invites/:token/accept', requireUser, async (req, res) => {
     if (!email) return res.status(400).json({ error: 'Token missing email claim' });
 
     await storage.upsertUser({ sub, email, name: profile.name });
-    const invite = await storage.acceptInvite({ token, sub, email });
+
+    const pending = await storage.getInviteByToken(token);
+    if (!pending) return res.status(404).json({ error: 'Invite not found' });
+    if (normalizeEmail(pending.email) !== email) {
+      return res.status(403).json({
+        error: 'Invite email does not match your logged-in account',
+        loggedInEmail: email,
+      });
+    }
+
+    const invite = await storage.acceptInvite({ token, sub });
     if (!invite) return res.status(404).json({ error: 'Invite not found' });
 
-    await storage.assignUserToTenant({ sub, tenantId: invite.tenantId, role: invite.role });
+    await storage.assignUserToTenant({ email, tenantId: invite.tenantId, role: invite.role });
     return res.status(200).json({ invite });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: 'Failed to accept invite' });
+    return res.status(500).json({
+      error: 'Failed to accept invite',
+      reason: String(err?.message || err),
+    });
   }
 });
 
@@ -125,9 +142,13 @@ router.post('/tenants/:tenantId/invites', requireUser, async (req, res) => {
     if (!requireTenantAdminOrGlobal(req, res, tenantId)) return;
 
     const email = normalizeEmail(req.body?.email);
-    const role = String(req.body?.role || 'member');
+    const rawRole = String(req.body?.role || 'tenant-user');
+    const role =
+      rawRole === 'member' ? 'tenant-user' :
+      rawRole === 'admin' ? 'tenant-admin' :
+      rawRole;
     if (!email) return res.status(400).json({ error: 'Missing email' });
-    if (!['member', 'admin'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
+    if (!['tenant-user', 'tenant-admin'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
 
     const invite = await storage.createInvite({
       tenantId,

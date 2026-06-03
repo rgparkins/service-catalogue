@@ -3,6 +3,7 @@ import { getOidcConfig, isExpired, parseJwt, randomString, sha256Base64Url } fro
 
 const STORAGE_KEY = 'SC_OIDC_TOKENS';
 const PKCE_KEY = 'SC_OIDC_PKCE';
+const LOGIN_FLAG_KEY = 'SC_OIDC_LOGIN_IN_PROGRESS';
 
 function readTokens() {
   try {
@@ -38,11 +39,40 @@ function clearPkce() {
   sessionStorage.removeItem(PKCE_KEY);
 }
 
+export function resetAuthStorage() {
+  try {
+    clearTokens();
+    clearPkce();
+    sessionStorage.removeItem(LOGIN_FLAG_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+const API_BASE = (import.meta.env?.VITE_SERVICE_METADATA_URL || '').replace(/\/+$/, '') || 'http://localhost:3000';
+
+async function fetchUserTenants(token) {
+  try {
+    const res = await fetch(`${API_BASE}/admin/ui/me/tenants`, {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      console.warn('[auth] /admin/ui/me/tenants returned', res.status);
+      return [];
+    }
+    return await res.json();
+  } catch (e) {
+    console.warn('[auth] fetchUserTenants failed:', e);
+    return [];
+  }
+}
+
 const AuthContext = React.createContext({
   ready: false,
   authenticated: false,
   token: null,
   tokenParsed: null,
+  tenants: null,
   login: async () => {},
   logout: async () => {},
   refresh: async () => false,
@@ -53,12 +83,26 @@ export function useAuth() {
 }
 
 export function hasGlobalAdmin(tokenParsed) {
-  return (tokenParsed?.realm_access?.roles || []).includes('global-admin');
+  const roles = tokenParsed?.realm_access?.roles || [];
+  return roles.includes('admin') || roles.includes('global-admin');
 }
 
 export function hasTenantAdmin(tokenParsed, tenantId) {
+  const roles = tokenParsed?.realm_access?.roles || [];
+  if (roles.includes('tenant-admin')) return true;
   const groups = tokenParsed?.groups || [];
   return groups.includes(`tenant:${tenantId}:admin`) || groups.includes(`/tenant:${tenantId}:admin`);
+}
+
+// True if the user has any membership in the given tenant (member, admin, or global admin).
+export function hasTenantAccess(tokenParsed, tenantId) {
+  if (hasGlobalAdmin(tokenParsed)) return true;
+  const roles = tokenParsed?.realm_access?.roles || [];
+  if (roles.includes('tenant-admin')) return true;
+  const groups = tokenParsed?.groups || [];
+  return groups.some(
+    (g) => g.startsWith(`tenant:${tenantId}:`) || g.startsWith(`/tenant:${tenantId}:`)
+  );
 }
 
 export function AuthProvider({ children }) {
@@ -68,6 +112,7 @@ export function AuthProvider({ children }) {
     token: null,
     tokenParsed: null,
     configured: false,
+    tenants: null, // null = not yet fetched; [] = fetched (possibly empty)
   });
 
   const config = React.useMemo(() => getOidcConfig(), []);
@@ -75,13 +120,21 @@ export function AuthProvider({ children }) {
   const setFromTokens = React.useCallback((tokens) => {
     const token = tokens?.access_token || null;
     const tokenParsed = token ? parseJwt(token) : null;
-    setState({
+    const authenticated = !!token && !!tokenParsed && !isExpired(tokenParsed);
+    setState((s) => ({
+      ...s,
       ready: true,
       configured: !!config,
-      authenticated: !!token && !!tokenParsed && !isExpired(tokenParsed),
+      authenticated,
       token,
       tokenParsed,
-    });
+      tenants: authenticated ? s.tenants : [], // clear on sign-out
+    }));
+    if (authenticated && token) {
+      fetchUserTenants(token).then((tenants) => {
+        setState((s) => (s.token === token ? { ...s, tenants } : s));
+      });
+    }
   }, [config]);
 
   const refresh = React.useCallback(async () => {
@@ -133,6 +186,17 @@ export function AuthProvider({ children }) {
   const login = React.useCallback(async () => {
     if (!config) return;
 
+    // Prevent multiple redirects in React StrictMode/dev double-invoke.
+    try {
+      const raw = sessionStorage.getItem(LOGIN_FLAG_KEY);
+      const last = raw ? parseInt(raw, 10) : 0;
+      // If we attempted login very recently, don't spam redirects.
+      if (last && Date.now() - last < 3000) return;
+      sessionStorage.setItem(LOGIN_FLAG_KEY, String(Date.now()));
+    } catch {
+      // ignore
+    }
+
     const redirectUri = `${window.location.origin}/auth/callback`;
     const state = randomString(24);
     const verifier = randomString(64);
@@ -153,11 +217,20 @@ export function AuthProvider({ children }) {
   }, [config]);
 
   const logout = React.useCallback(async () => {
+    const existing = readTokens();
+    const idTokenHint = existing?.id_token || null;
     clearTokens();
+    clearPkce();
+    try {
+      sessionStorage.removeItem(LOGIN_FLAG_KEY);
+    } catch {
+      // ignore
+    }
     setState((s) => ({ ...s, authenticated: false, token: null, tokenParsed: null }));
     if (!config) return;
     const url = new URL(config.logoutEndpoint);
     url.searchParams.set('client_id', config.clientId);
+    if (idTokenHint) url.searchParams.set('id_token_hint', idTokenHint);
     url.searchParams.set('post_logout_redirect_uri', window.location.origin + '/');
     window.location.assign(url.toString());
   }, [config]);
@@ -169,6 +242,7 @@ export function AuthProvider({ children }) {
       authenticated: state.authenticated,
       token: state.token,
       tokenParsed: state.tokenParsed,
+      tenants: state.tenants,
       login,
       logout,
       refresh,
@@ -209,6 +283,10 @@ export async function handleAuthCallback() {
 
   const tokens = await res.json();
   writeTokens(tokens);
+  try {
+    sessionStorage.removeItem(LOGIN_FLAG_KEY);
+  } catch {
+    // ignore
+  }
   return tokens;
 }
-

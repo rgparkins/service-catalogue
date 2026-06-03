@@ -26,14 +26,23 @@ services:
       SEED_TENANT_COMPANY_NAME: TalentConsultingSandBox
       SEED_TENANT_BILLING_EMAIL: sandbox@example.com
       SEED_TENANT_API_KEY: talent-sandbox-api-key
-      KEYCLOAK_ISSUER: http://keycloak:8080/realms/service-catalogue
-      KEYCLOAK_AUDIENCE: service-catalogue-api
+      # Token issuer is what the browser sees (VITE_KEYCLOAK_URL).
+      KEYCLOAK_ISSUER: http://localhost:8080/realms/service-catalogue
+      # JWKS issuer is what the API container can reach on the Docker network.
+      KEYCLOAK_JWKS_ISSUER: http://keycloak:8080/realms/service-catalogue
+      # KEYCLOAK_AUDIENCE: service-catalogue-api
       KEYCLOAK_ADMIN_URL: http://keycloak:8080
       KEYCLOAK_REALM: service-catalogue
       KEYCLOAK_ADMIN_USER: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       KEYCLOAK_WEB_CLIENT_ID: service-catalogue-web
       PUBLIC_APP_URL: http://localhost:5173
+      EXPOSE_REGISTRATION_LINK: "true"
+      # SMTP_HOST: smtp.example.com
+      # SMTP_PORT: "587"
+      # SMTP_USER: user
+      # SMTP_PASS: pass
+      # SMTP_FROM: no-reply@example.com
     depends_on:
       - mongodb
       - keycloak
@@ -50,6 +59,20 @@ services:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    depends_on:
+      - mongodb
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_PORT: "27017"
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
+      ME_CONFIG_BASICAUTH: "false"
+    networks:
+      - test-network
+    ports:
+      - "8081:8081"
   test:
     build:
       context: ./src/api/test

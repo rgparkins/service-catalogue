@@ -1,5 +1,25 @@
 import React from 'react';
 import { useAuth } from './auth/AuthProvider.jsx';
+import Header from './Header.jsx';
+
+const HERO_IMAGE_URL = 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=900&auto=format&fit=crop&q=80';
+
+function HeroImage() {
+  return (
+    <img
+      src={HERO_IMAGE_URL}
+      alt="Illuminated fibre optic cables representing service visibility and connectivity"
+      style={{
+        width: '100%',
+        height: 340,
+        objectFit: 'cover',
+        borderRadius: 12,
+        display: 'block',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+      }}
+    />
+  );
+}
 
 export default function Landing() {
   const auth = useAuth();
@@ -11,33 +31,7 @@ export default function Landing() {
 
   return (
     <div className="bg-light min-vh-100">
-      <nav className="navbar navbar-expand-lg bg-white border-bottom">
-        <div className="container">
-          <a className="navbar-brand" href="/">
-            Service Catalogue
-          </a>
-          <div className="navbar-nav ms-auto">
-            <a className="nav-link" href="/register">
-              Create tenant
-            </a>
-            <button className="nav-link btn btn-link" onClick={() => scrollTo('about')}>
-              About us
-            </button>
-            <button className="nav-link btn btn-link" onClick={() => scrollTo('pricing')}>
-              Pricing
-            </button>
-            {auth.authenticated ? (
-              <button className="nav-link btn btn-link" onClick={() => auth.logout()} disabled={!auth.ready}>
-                Logout
-              </button>
-            ) : (
-              <button className="nav-link btn btn-link" onClick={() => auth.login()} disabled={!auth.ready}>
-                Login
-              </button>
-            )}
-          </div>
-        </div>
-      </nav>
+      <Header mode="public" onScrollTo={scrollTo} />
 
       <main className="container py-5">
         <div className="row align-items-center g-4">
@@ -75,17 +69,7 @@ export default function Landing() {
           </div>
 
           <div className="col-12 col-lg-5">
-            <div className="card shadow-sm">
-              <div className="card-body">
-                <div className="fw-semibold mb-2">What you can do</div>
-                <ul className="mb-0">
-                  <li>Create tenants and rotate API keys</li>
-                  <li>Validate and publish service metadata</li>
-                  <li>Explore a dependency graph per tenant</li>
-                  <li>Track request volumes and response times</li>
-                </ul>
-              </div>
-            </div>
+            <HeroImage />
           </div>
         </div>
 

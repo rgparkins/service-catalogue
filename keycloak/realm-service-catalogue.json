@@ -6,6 +6,9 @@
   "loginWithEmailAllowed": true,
   "roles": {
     "realm": [
+      { "name": "admin" },
+      { "name": "tenant-user" },
+      { "name": "tenant-admin" },
       { "name": "global-admin" }
     ]
   },
@@ -44,8 +47,7 @@
       "credentials": [
         { "type": "password", "value": "admin", "temporary": false }
       ],
-      "realmRoles": ["global-admin"]
+      "realmRoles": ["admin", "global-admin"]
     }
   ]
 }
-

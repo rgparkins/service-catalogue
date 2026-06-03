@@ -38,6 +38,9 @@ Before(async function() {
     await db.collection('accounts').deleteMany({});
     await db.collection('usage_events').deleteMany({});
     await db.collection('rulesets').deleteMany({});
+    await db.collection('registrations').deleteMany({});
+    await db.collection('user_profiles').deleteMany({});
+    await db.collection('pending_tenant_users').deleteMany({});
 
     const defaultRawKey = 'default-tenant-api-key';
     const defaultKeyHash = crypto.createHash('sha256').update(defaultRawKey).digest('hex');

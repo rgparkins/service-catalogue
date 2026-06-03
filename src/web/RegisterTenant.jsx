@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from './auth/AuthProvider.jsx';
+import Header from './Header.jsx';
 
 const API_BASE =
   (import.meta.env.VITE_SERVICE_METADATA_URL || '').replace(/\/+$/, '') || 'http://localhost:3000';
@@ -36,27 +37,7 @@ export default function RegisterTenant() {
 
   return (
     <div className="bg-light min-vh-100">
-      <nav className="navbar bg-white border-bottom">
-        <div className="container">
-          <a className="navbar-brand" href="/">
-            Service Catalogue
-          </a>
-          <div className="navbar-nav ms-auto">
-            <a className="nav-link" href="/">
-              Home
-            </a>
-            {auth.authenticated ? (
-              <button className="nav-link btn btn-link" onClick={() => auth.logout()} disabled={!auth.ready}>
-                Logout
-              </button>
-            ) : (
-              <a className="nav-link" href="/login">
-                Login
-              </a>
-            )}
-          </div>
-        </div>
-      </nav>
+      <Header mode="public" />
 
       <main className="container py-5" style={{ maxWidth: 920 }}>
         <div className="row g-4">

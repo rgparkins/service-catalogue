@@ -9,6 +9,7 @@ API_DIR="$ROOT_DIR/src/api"
 cleanup() {
   docker stop app || true
   docker stop mongodb || true
+  docker stop keycloak || true
   # remove the network only if it exists
   if docker network ls --filter name=^dockernet$ -q >/dev/null 2>&1; then
     docker network rm dockernet || true
@@ -31,6 +32,7 @@ error() {
   echo
   docker rm app || true
   docker rm mongodb || true
+  docker rm keycloak || true
   exit 1
 }
 
@@ -66,6 +68,7 @@ echo Running mongodb stub
 echo ===========================================================
 echo
 
+docker rm -f mongodb >/dev/null 2>&1 || true
 docker run --rm -d -p "27017:27017" \
              -e MONGO_INITDB_DATABASE=service-catalogue \
              --network dockernet \
@@ -76,14 +79,38 @@ sleep 10
 
 echo
 echo ===========================================================
+echo Running keycloak
+echo ===========================================================
+echo
+
+docker rm -f keycloak >/dev/null 2>&1 || true
+docker run --rm -d -p "8080:8080" \
+  -e KEYCLOAK_ADMIN=admin \
+  -e KEYCLOAK_ADMIN_PASSWORD=admin \
+  -v "$ROOT_DIR/keycloak/realm-service-catalogue.json":/opt/keycloak/data/import/realm-service-catalogue.json:ro \
+  --network dockernet \
+  --name keycloak \
+  quay.io/keycloak/keycloak:26.0.0 start-dev --import-realm
+
+sleep 10
+
+echo
+echo ===========================================================
 echo Running app
 echo ===========================================================
 echo
 
+docker rm -f app >/dev/null 2>&1 || true
 docker run --rm -d \
   -e MONGODB_ATLAS_URI=mongodb://mongodb:27017 \
   -e SCHEMA_BASE_PATH=/usr/src/app/test-schemas \
   -e ADMIN_API_KEY=test-admin-key \
+  -e EXPOSE_REGISTRATION_LINK=true \
+  -e KEYCLOAK_ADMIN_URL=http://keycloak:8080 \
+  -e KEYCLOAK_REALM=service-catalogue \
+  -e KEYCLOAK_ADMIN_USER=admin \
+  -e KEYCLOAK_ADMIN_PASSWORD=admin \
+  -e KEYCLOAK_WEB_CLIENT_ID=service-catalogue-web \
   --name app -v "$API_DIR/test/assets/test-schemas":/usr/src/app/test-schemas \
   --network dockernet \
   sc_app

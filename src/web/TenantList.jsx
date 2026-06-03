@@ -1,4 +1,5 @@
 import React from 'react';
+import Header from './Header.jsx';
 
 const API_BASE =
   (import.meta.env.VITE_SERVICE_METADATA_URL || '').replace(/\/+$/, '') || 'http://localhost:3000';
@@ -150,21 +151,7 @@ export default function TenantList() {
 
   return (
     <div className="bg-light min-vh-100">
-      <nav className="navbar navbar-expand-lg bg-white border-bottom">
-        <div className="container">
-          <a className="navbar-brand" href="/">
-            Service Catalogue
-          </a>
-          <div className="navbar-nav ms-auto">
-            <a className="nav-link" href="/plans">
-              Plans
-            </a>
-            <a className="nav-link" href="/admin">
-              Admin
-            </a>
-          </div>
-        </div>
-      </nav>
+      <Header mode="app" />
 
       <main className="container py-4">
         <div className="p-4 p-md-5 mb-4 bg-white rounded-3 border">

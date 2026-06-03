@@ -139,6 +139,21 @@ export class KeycloakAdminClient {
     if (!res.ok) throw new Error(`Keycloak add-to-group failed (HTTP ${res.status})`);
   }
 
+  async setUserPassword(userId, password, { temporary = false } = {}) {
+    const res = await this._kcFetch(
+      `/admin/realms/${encodeURIComponent(this.realm)}/users/${encodeURIComponent(userId)}/reset-password`,
+      {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ type: 'password', value: String(password), temporary: !!temporary }),
+      }
+    );
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(txt || `Keycloak reset-password failed (HTTP ${res.status})`);
+    }
+  }
+
   async executeActionsEmail(userId, { clientId, redirectUri, lifespanSeconds = 60 * 60 } = {}) {
     const qp = new URLSearchParams();
     if (clientId) qp.set('clientId', clientId);
@@ -159,4 +174,3 @@ export class KeycloakAdminClient {
     }
   }
 }
-
