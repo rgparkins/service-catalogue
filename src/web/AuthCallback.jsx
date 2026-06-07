@@ -5,17 +5,25 @@ export default function AuthCallback() {
   const [error, setError] = React.useState(null);
 
   React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    // Keycloak returned an error (e.g. invalid_scope) or redirected here after
+    // logout without a code — bail out cleanly rather than attempting an exchange.
+    if (params.get('error') || !params.get('code')) {
+      resetAuthStorage();
+      window.location.replace('/');
+      return;
+    }
+
     (async () => {
       try {
         await handleAuthCallback();
         window.location.assign('/tenants');
       } catch (e) {
         const msg = String(e?.message || e || '');
-        // If someone lands here without starting a login (or after a logout redirect),
-        // don't strand them on a broken callback page.
         if (msg.includes('Missing PKCE state') || msg.includes('Invalid auth callback')) {
           resetAuthStorage();
-          window.location.replace('/login');
+          window.location.replace('/');
           return;
         }
         setError(e);

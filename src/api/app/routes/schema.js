@@ -24,9 +24,9 @@ const validateLimiter = createFixedWindowRateLimiter({
     keyFn: (req) => req.tenant?.tenantId || req.ip || 'anonymous',
 });
 
-router.get('/schemas', async (req, res) => {
+router.get('/tenants/:tenantId/schemas', async (req, res) => {
     try {
-        const schemas = await validator.listSchemas();
+        const schemas = await storage.listSchemas({ tenantId: req.params.tenantId });
         res.json(schemas);
     } catch (err) {
         console.error(err);
@@ -34,8 +34,9 @@ router.get('/schemas', async (req, res) => {
     }
 });
 
-router.post('/schemas', async (req, res) => {
+router.post('/tenants/:tenantId/schemas', async (req, res) => {
     try {
+        const { tenantId } = req.params;
         const content = req.body;
         const version = content?.version;
         if (!version) {
@@ -43,14 +44,7 @@ router.post('/schemas', async (req, res) => {
         }
 
         const name = req.body?.name || `schema-${version}.json`;
-        await storage.upsertSchema({
-            status: 'draft',
-            version,
-            name,
-            content,
-            createdAt: new Date()
-        });
-
+        await storage.upsertSchema({ status: 'draft', version, name, content, createdAt: new Date(), tenantId });
         await validator.reloadFromDb();
         res.status(201).json({ version });
     } catch (err) {
@@ -59,24 +53,19 @@ router.post('/schemas', async (req, res) => {
     }
 });
 
-router.put('/schemas/:version', async (req, res) => {
+router.put('/tenants/:tenantId/schemas/:version', async (req, res) => {
     try {
-        const version = req.params.version;
-        const existing = await storage.getSchema(version);
+        const { tenantId, version } = req.params;
+        const existing = await storage.getSchema(version, 'active', tenantId);
         if (!existing) return res.status(404).json({ error: 'Not found' });
         if (existing.status === 'live' || existing.status === 'superseded') {
             return res.status(409).json({ error: `Schema '${version}' is ${existing.status} and cannot be edited` });
         }
-
         const content = req.body;
         if (content?.version && content.version !== version) {
             return res.status(400).json({ error: 'Schema version cannot be changed' });
         }
-
-        await storage.updateSchema(version, {
-            name: req.body?.name || existing.name || `schema-${version}.json`,
-            content
-        });
+        await storage.updateSchema(version, { name: req.body?.name || existing.name || `schema-${version}.json`, content }, tenantId);
         await validator.reloadFromDb();
         res.status(200).json({ version });
     } catch (err) {
@@ -85,19 +74,19 @@ router.put('/schemas/:version', async (req, res) => {
     }
 });
 
-router.delete('/schemas/:version', async (req, res) => {
+router.delete('/tenants/:tenantId/schemas/:version', async (req, res) => {
     try {
-        const version = req.params.version;
-        const existing = await storage.getSchema(version);
+        const { tenantId, version } = req.params;
+        const existing = await storage.getSchema(version, 'active', tenantId);
         if (!existing) return res.status(404).json({ error: 'Not found' });
         if (existing.status === 'live' || existing.status === 'superseded') {
             return res.status(409).json({ error: `Schema '${version}' is ${existing.status} and cannot be removed` });
         }
-        const inUse = await storage.isSchemaInUse({ version: existing.version, name: existing.name });
+        const inUse = await storage.isSchemaInUse({ version: existing.version, name: existing.name, tenantId });
         if (inUse) {
             return res.status(409).json({ error: `Schema '${version}' is referenced by submitted metadata and cannot be removed` });
         }
-        const deleted = await storage.deleteSchema(version);
+        const deleted = await storage.deleteSchema(version, tenantId);
         await validator.reloadFromDb();
         res.status(200).json({ deleted });
     } catch (err) {
@@ -106,21 +95,20 @@ router.delete('/schemas/:version', async (req, res) => {
     }
 });
 
-router.post('/schemas/:version/live', async (req, res) => {
+router.post('/tenants/:tenantId/schemas/:version/live', async (req, res) => {
     try {
-        const version = req.params.version;
-        const existing = await storage.getSchema(version);
+        const { tenantId, version } = req.params;
+        const existing = await storage.getSchema(version, 'active', tenantId);
         if (!existing) return res.status(404).json({ error: 'Not found' });
 
-        // Mark any currently live schema as superseded
-        const all = await storage.listSchemas();
+        const all = await storage.listSchemas({ tenantId });
         await Promise.all(
             (all || [])
                 .filter((s) => s.status === 'live' && s.version !== version)
-                .map((s) => storage.updateSchema(s.version, { status: 'superseded' }))
+                .map((s) => storage.updateSchema(s.version, { status: 'superseded' }, tenantId))
         );
 
-        await storage.updateSchema(version, { status: 'live' });
+        await storage.updateSchema(version, { status: 'live' }, tenantId);
         await validator.reloadFromDb();
         res.status(200).json({ version, status: 'live' });
     } catch (err) {

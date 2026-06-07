@@ -13,12 +13,14 @@ export default function TenantSchemas({ tenantId }) {
   const [editingVersion, setEditingVersion] = React.useState(null);
   const [editSchemaJson, setEditSchemaJson] = React.useState('');
 
+  const schemaBase = `${API_BASE}/metadata/tenants/${encodeURIComponent(tenantId)}/schemas`;
+
   const loadSchemas = React.useCallback(async () => {
-    const res = await fetch(`${API_BASE}/metadata/schemas`);
+    const res = await fetch(schemaBase);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     setSchemas(Array.isArray(data) ? data : []);
-  }, []);
+  }, [tenantId]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -41,7 +43,7 @@ export default function TenantSchemas({ tenantId }) {
     setSaving(true);
     try {
       const parsed = JSON.parse(newSchemaJson);
-      const res = await fetch(`${API_BASE}/metadata/schemas`, {
+      const res = await fetch(schemaBase, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(parsed),
@@ -77,7 +79,7 @@ export default function TenantSchemas({ tenantId }) {
     setSaving(true);
     try {
       const parsed = JSON.parse(editSchemaJson);
-      const res = await fetch(`${API_BASE}/metadata/schemas/${encodeURIComponent(editingVersion)}`, {
+      const res = await fetch(`${schemaBase}/${encodeURIComponent(editingVersion)}`, {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(parsed),
@@ -101,7 +103,7 @@ export default function TenantSchemas({ tenantId }) {
     if (!confirm(`Delete schema ${version}?`)) return;
     setSaving(true);
     try {
-      const res = await fetch(`${API_BASE}/metadata/schemas/${encodeURIComponent(version)}`, {
+      const res = await fetch(`${schemaBase}/${encodeURIComponent(version)}`, {
         method: 'DELETE',
       });
       if (!res.ok) {
@@ -120,7 +122,7 @@ export default function TenantSchemas({ tenantId }) {
     if (!confirm(`Set schema ${version} live? This will supersede the current live schema.`)) return;
     setSaving(true);
     try {
-      const res = await fetch(`${API_BASE}/metadata/schemas/${encodeURIComponent(version)}/live`, {
+      const res = await fetch(`${schemaBase}/${encodeURIComponent(version)}/live`, {
         method: 'POST',
       });
       if (!res.ok) {

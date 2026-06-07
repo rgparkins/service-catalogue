@@ -1,6 +1,16 @@
 import React from 'react';
 import { useAuth, hasGlobalAdmin, hasTenantAdmin } from './auth/AuthProvider.jsx';
 import Header from './Header.jsx';
+import Breadcrumb from './Breadcrumb.jsx';
+
+const SECTION_LABELS = {
+  schemas: 'Schemas',
+  graph: 'Graph',
+  rulesets: 'Rulesets',
+  usage: 'Usage',
+  settings: 'Settings',
+  users: 'Users',
+};
 
 export default function TenantLayout({ tenantId, active, children }) {
   const auth = useAuth();
@@ -44,7 +54,14 @@ export default function TenantLayout({ tenantId, active, children }) {
             </div>
           </aside>
 
-          <main className="col-12 col-md-9 col-lg-10 py-3 px-3 px-md-4">{children}</main>
+          <main className="col-12 col-md-9 col-lg-10 py-3 px-3 px-md-4">
+            <Breadcrumb crumbs={[
+              { label: 'Tenants', href: '/tenants' },
+              { label: tenantId, href: `/tenant/${encodeURIComponent(tenantId)}/schemas` },
+              { label: SECTION_LABELS[active] || active },
+            ]} />
+            {children}
+          </main>
         </div>
       </div>
     </div>

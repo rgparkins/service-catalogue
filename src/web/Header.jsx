@@ -40,6 +40,7 @@ export default function Header({
       ) : (
         <NavLink href="/plans">Pricing</NavLink>
       )}
+      {!auth.authenticated && <NavLink href="/register">Register</NavLink>}
       {loginLogout}
     </>
   );
@@ -47,21 +48,17 @@ export default function Header({
   const commonApp = (
     <>
       <NavLink href="/tenants">Tenants</NavLink>
-      <NavLink href="/invites">Invites</NavLink>
-      <NavLink href="/plans">Plans</NavLink>
-      {hasGlobalAdmin(auth.tokenParsed) ? <NavLink href="/admin/users">Users</NavLink> : null}
+      {hasGlobalAdmin(auth.tokenParsed) ? <NavLink href="/admin">Admin</NavLink> : null}
+      <NavLink href="/token">Token</NavLink>
       {loginLogout}
     </>
   );
 
-  const title =
-    mode === 'tenant' ? (
-      <span className="navbar-brand mb-0">Service Catalogue</span>
-    ) : (
-      <a className="navbar-brand" href="/">
-        Service Catalogue
-      </a>
-    );
+  const title = (
+    <a className="navbar-brand" href="/">
+      Service Catalogue
+    </a>
+  );
 
   const nav =
     mode === 'public' ? commonPublic :

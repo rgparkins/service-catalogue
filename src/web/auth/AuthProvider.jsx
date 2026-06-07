@@ -253,9 +253,24 @@ export function AuthProvider({ children }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+// Module-level promise ensures React StrictMode's double-invoke doesn't run
+// two parallel token exchanges. The second call waits on the first.
+let _callbackPromise = null;
+
 export async function handleAuthCallback() {
+  if (_callbackPromise) return _callbackPromise;
+  _callbackPromise = _doHandleAuthCallback().finally(() => {
+    _callbackPromise = null;
+  });
+  return _callbackPromise;
+}
+
+async function _doHandleAuthCallback() {
   const config = getOidcConfig();
   if (!config) throw new Error('OIDC not configured');
+
+  const existing = readTokens();
+  if (existing?.access_token) return existing;
 
   const pkce = readPkce();
   clearPkce();
@@ -279,7 +294,16 @@ export async function handleAuthCallback() {
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
     body,
   });
-  if (!res.ok) throw new Error('Token exchange failed');
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    // Code already used (StrictMode double-invoke or back-button replay).
+    // If the first exchange already wrote tokens, use those instead of failing.
+    if (res.status === 400 && detail.includes('invalid_grant')) {
+      const already = readTokens();
+      if (already?.access_token) return already;
+    }
+    throw new Error(`Token exchange failed (${res.status}): ${detail}`);
+  }
 
   const tokens = await res.json();
   writeTokens(tokens);

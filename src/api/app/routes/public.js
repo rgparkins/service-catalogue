@@ -2,7 +2,7 @@ import express from 'express';
 import crypto from 'crypto';
 import MongoDb from '../lib/storage/Mongodb.js';
 import { KeycloakAdminClient } from '../lib/auth/keycloak-admin.js';
-import { sendRegistrationEmail } from '../lib/email.js';
+import { publish } from '../lib/messaging/publisher.js';
 
 const router = express.Router();
 const storage = new MongoDb();
@@ -62,17 +62,18 @@ router.post('/signup', async (req, res) => {
     const base = process.env.PUBLIC_APP_URL ? process.env.PUBLIC_APP_URL.replace(/\/+$/, '') : 'http://localhost:5173';
     const registrationLink = `${base}/register/complete?token=${encodeURIComponent(reg.token)}`;
 
-    const emailResult = await sendRegistrationEmail({ to: adminEmail, registrationLink, tenantId }).catch((e) => {
-      console.error(e);
-      return { sent: false, reason: 'send failed' };
+    await publish('registration.created', {
+      tenantId,
+      email: adminEmail,
+      name: adminName,
+      registrationLink,
+      token: reg.token,
     });
 
     return res.status(201).json({
       tenantId,
       adminEmail,
-      message: emailResult.sent
-        ? 'Tenant created. Check your email to complete registration.'
-        : 'Tenant created. Email could not be sent (SMTP not configured).',
+      message: 'Tenant created. Check your email to complete registration.',
       ...(String(process.env.EXPOSE_REGISTRATION_LINK || '').toLowerCase() === 'true'
         ? { registrationLink, registrationToken: reg.token }
         : {}),

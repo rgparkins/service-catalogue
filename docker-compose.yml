@@ -2,9 +2,7 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:26.0.0
     container_name: keycloak
-    command:
-      - start-dev
-      - --import-realm
+    command: ["start-dev", "--import-realm"]
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
@@ -38,6 +36,7 @@ services:
       KEYCLOAK_WEB_CLIENT_ID: service-catalogue-web
       PUBLIC_APP_URL: http://localhost:5173
       EXPOSE_REGISTRATION_LINK: "true"
+      RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
       # SMTP_HOST: smtp.example.com
       # SMTP_PORT: "587"
       # SMTP_USER: user
@@ -48,6 +47,20 @@ services:
       - keycloak
     ports:
       - "3000:3000"
+      - "9229:9229"
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - test-network
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
   mongodb:
     image: mongo:latest
     container_name: mongodb
@@ -83,6 +96,25 @@ services:
       test-network:
     depends_on:
       - app
+  consumer:
+    build:
+      context: ./src/consumer
+    container_name: consumer
+    command: node --inspect=0.0.0.0:9229 index.js
+    ports:
+      - "9230:9229"
+    environment:
+      RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_USER: richard.parkins@gmail.com
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: richard.parkins@gmail.com
+    depends_on:
+      - rabbitmq
+    networks:
+      - test-network
+    restart: on-failure
   web:
     build:
       context: ./src/web
@@ -106,3 +138,4 @@ networks:
     driver: bridge
 volumes:
   mongodb_data:
+  rabbitmq_data:

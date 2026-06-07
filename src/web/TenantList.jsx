@@ -1,10 +1,14 @@
 import React from 'react';
 import Header from './Header.jsx';
+import Breadcrumb from './Breadcrumb.jsx';
+import { useAuth, hasGlobalAdmin } from './auth/AuthProvider.jsx';
 
 const API_BASE =
   (import.meta.env.VITE_SERVICE_METADATA_URL || '').replace(/\/+$/, '') || 'http://localhost:3000';
 
 export default function TenantList() {
+  const auth = useAuth();
+  const isGlobalAdmin = hasGlobalAdmin(auth.tokenParsed);
   const [tenants, setTenants] = React.useState(null);
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(24);
@@ -33,6 +37,17 @@ export default function TenantList() {
     async function load() {
       try {
         setError(null);
+        if (!auth.ready) return;
+
+        if (!isGlobalAdmin) {
+          const visibleTenants = auth.tenants || [];
+          if (!cancelled) {
+            setTenants(visibleTenants);
+            setTotal(visibleTenants.length);
+          }
+          return;
+        }
+
         const res = await fetch(`${API_BASE}/admin/tenants?page=${page}&pageSize=${pageSize}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -49,9 +64,16 @@ export default function TenantList() {
     return () => {
       cancelled = true;
     };
-  }, [page, pageSize]);
+  }, [auth.ready, auth.tenants, isGlobalAdmin, page, pageSize]);
 
   const refreshTenants = async () => {
+    if (!isGlobalAdmin) {
+      const visibleTenants = auth.tenants || [];
+      setTenants(visibleTenants);
+      setTotal(visibleTenants.length);
+      return;
+    }
+
     const res = await fetch(`${API_BASE}/admin/tenants?page=${page}&pageSize=${pageSize}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
@@ -154,6 +176,7 @@ export default function TenantList() {
       <Header mode="app" />
 
       <main className="container py-4">
+        <Breadcrumb crumbs={[{ label: 'Tenants' }]} />
         <div className="p-4 p-md-5 mb-4 bg-white rounded-3 border">
           <div className="container-fluid py-2">
             <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
@@ -268,31 +291,36 @@ export default function TenantList() {
           <>
             <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-3">
               <div className="text-muted">
-                Showing {(page - 1) * pageSize + 1}–{(page - 1) * pageSize + tenants.length}
-                {typeof total === 'number' ? ` of ${total}` : ''}
+                {isGlobalAdmin ? (
+                  <>Showing {(page - 1) * pageSize + 1}–{(page - 1) * pageSize + tenants.length}{typeof total === 'number' ? ` of ${total}` : ''}</>
+                ) : (
+                  <>Showing {tenants.length} tenant{tenants.length === 1 ? '' : 's'} you have access to</>
+                )}
               </div>
-              <div className="d-flex align-items-center gap-2">
-                <label className="form-label mb-0 text-muted" htmlFor="pageSize">
-                  Per page
-                </label>
-                <select
-                  id="pageSize"
-                  className="form-select form-select-sm"
-                  style={{ width: 110 }}
-                  value={pageSize}
-                  onChange={(e) => {
-                    const next = parseInt(e.target.value, 10);
-                    setPage(1);
-                    setPageSize(next);
-                  }}
-                >
-                  {[12, 24, 48, 96].map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {isGlobalAdmin ? (
+                <div className="d-flex align-items-center gap-2">
+                  <label className="form-label mb-0 text-muted" htmlFor="pageSize">
+                    Per page
+                  </label>
+                  <select
+                    id="pageSize"
+                    className="form-select form-select-sm"
+                    style={{ width: 110 }}
+                    value={pageSize}
+                    onChange={(e) => {
+                      const next = parseInt(e.target.value, 10);
+                      setPage(1);
+                      setPageSize(next);
+                    }}
+                  >
+                    {[12, 24, 48, 96].map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
             </div>
 
             <div className="row g-3">
@@ -318,9 +346,11 @@ export default function TenantList() {
               ))}
             </div>
 
-            <div className="d-flex justify-content-center mt-4">
-              <Pagination />
-            </div>
+            {isGlobalAdmin ? (
+              <div className="d-flex justify-content-center mt-4">
+                <Pagination />
+              </div>
+            ) : null}
           </>
         )}
       </main>

@@ -257,29 +257,31 @@ function MongoDb() {
         return { schemaType };
     };
 
-    this.upsertSchema = async ({ version, name, schemaType = 'active', status = 'draft', content, createdAt = new Date() }) => {
-        let db = await loadDB();
-	        await db.collection("schemas").updateOne(
-	            { version, ...schemaTypeFilter(schemaType) },
-	            {
-	                $set: { name, content, status, schemaType },
-	                $setOnInsert: { createdAt, version }
-	            },
-	            { upsert: true }
-	        ).catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
-	    };
+    const tenantSchemaFilter = (tenantId) => tenantId ? { tenantId } : {};
 
-    this.getSchema = async (version, schemaType = 'active') => {
+    this.upsertSchema = async ({ version, name, schemaType = 'active', status = 'draft', content, createdAt = new Date(), tenantId = null }) => {
+        let db = await loadDB();
+        await db.collection("schemas").updateOne(
+            { version, ...schemaTypeFilter(schemaType), ...tenantSchemaFilter(tenantId) },
+            {
+                $set: { name, content, status, schemaType, ...(tenantId ? { tenantId } : {}) },
+                $setOnInsert: { createdAt, version }
+            },
+            { upsert: true }
+        ).catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+    };
+
+    this.getSchema = async (version, schemaType = 'active', tenantId = null) => {
         let db = await loadDB();
         return await db.collection("schemas").findOne(
-            { version, ...schemaTypeFilter(schemaType) },
+            { version, ...schemaTypeFilter(schemaType), ...tenantSchemaFilter(tenantId) },
             { projection: { _id: 0 } }
         ).catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
     };
 
-    this.listSchemas = async ({ schemaType = 'active', status = null, includeContent = false } = {}) => {
+    this.listSchemas = async ({ schemaType = 'active', status = null, includeContent = false, tenantId = null } = {}) => {
         let db = await loadDB();
-        const query = { ...schemaTypeFilter(schemaType), ...(status ? { status } : {}) };
+        const query = { ...schemaTypeFilter(schemaType), ...tenantSchemaFilter(tenantId), ...(status ? { status } : {}) };
         const projection = includeContent
             ? { _id: 0, version: 1, createdAt: 1, name: 1, status: 1, content: 1 }
             : { _id: 0, version: 1, createdAt: 1, name: 1, status: 1 };
@@ -291,29 +293,30 @@ function MongoDb() {
             .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
     };
 
-    this.updateSchema = async (version, updates) => {
+    this.updateSchema = async (version, updates, tenantId = null) => {
         let db = await loadDB();
         const result = await db.collection("schemas").findOneAndUpdate(
-            { version, ...schemaTypeFilter('active') },
+            { version, ...schemaTypeFilter('active'), ...tenantSchemaFilter(tenantId) },
             { $set: updates },
             { returnOriginal: false, projection: { _id: 0 } }
         ).catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
         return result.value;
     };
 
-    this.deleteSchema = async (version) => {
+    this.deleteSchema = async (version, tenantId = null) => {
         let db = await loadDB();
-        const result = await db.collection("schemas").deleteOne({ version, ...schemaTypeFilter('active') })
-            .catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
+        const result = await db.collection("schemas").deleteOne(
+            { version, ...schemaTypeFilter('active'), ...tenantSchemaFilter(tenantId) }
+        ).catch(err => { global.db_connection = null; throw new ErrorHandler(500, err); });
         return result.deletedCount > 0;
     };
 
-    this.isSchemaInUse = async ({ version, name }) => {
+    this.isSchemaInUse = async ({ version, name, tenantId = null }) => {
         let db = await loadDB();
         const candidates = [version, name].filter(Boolean);
         if (candidates.length === 0) return false;
 
-        const query = { "service.validated_against": { $in: candidates } };
+        const query = { ...tenantFilter(tenantId), "service.validated_against": { $in: candidates } };
         const [currentCount, historyCount] = await Promise.all([
             db.collection("service").countDocuments(query),
             db.collection("service_history").countDocuments(query),

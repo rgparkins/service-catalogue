@@ -1,4 +1,5 @@
 import React from 'react';
+import Breadcrumb from './Breadcrumb.jsx';
 
 const API_BASE =
   (import.meta.env.VITE_SERVICE_METADATA_URL || '').replace(/\/+$/, '') || 'http://localhost:3000';
@@ -30,6 +31,7 @@ export default function Admin() {
   return (
     <div className="bg-light min-vh-100">
       <main className="container py-4">
+        <Breadcrumb crumbs={[{ label: 'Admin' }]} />
         <div className="p-4 p-md-5 mb-4 bg-white rounded-3 border">
           <div className="container-fluid py-2">
             <h1 className="display-6 mb-2">Admin</h1>

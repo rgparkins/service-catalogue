@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth, hasGlobalAdmin } from './auth/AuthProvider.jsx';
 import Login from './Login.jsx';
 import { apiFetch } from './api.js';
+import Breadcrumb from './Breadcrumb.jsx';
 
 export default function UsersAdmin() {
   const auth = useAuth();
@@ -48,6 +49,7 @@ export default function UsersAdmin() {
   return (
     <div className="bg-light min-vh-100">
       <main className="container py-4">
+        <Breadcrumb crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Users' }]} />
         <div className="d-flex align-items-center justify-content-between gap-3 mb-3">
           <h1 className="h4 mb-0">User management</h1>
           <button className="btn btn-outline-secondary btn-sm" onClick={load} disabled={loading}>

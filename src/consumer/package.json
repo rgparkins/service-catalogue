@@ -1,0 +1,13 @@
+{
+  "name": "service-catalogue-consumer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.8",
+    "nodemailer": "^6.9.14"
+  }
+}

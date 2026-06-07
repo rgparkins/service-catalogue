@@ -1,6 +1,7 @@
 {
   "realm": "service-catalogue",
   "enabled": true,
+  "sslRequired": "none",
   "displayName": "Service Catalogue",
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
@@ -22,11 +23,25 @@
       "publicClient": true,
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
-      "redirectUris": [
-        "http://localhost:5173/*"
-      ],
-      "webOrigins": [
-        "http://localhost:5173"
+      "redirectUris": ["http://localhost:5173/*"],
+      "webOrigins": ["http://localhost:5173"],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:5173/*##"
+      },
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "full.path": "false",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "groups",
+            "userinfo.token.claim": "true"
+          }
+        }
       ]
     },
     {
@@ -47,7 +62,8 @@
       "credentials": [
         { "type": "password", "value": "admin", "temporary": false }
       ],
-      "realmRoles": ["admin", "global-admin"]
+      "realmRoles": ["admin", "global-admin", "tenant-user", "tenant-admin"],
+      "groups": ["/tenant:TalentConsultingSandBox:admin"]
     }
   ]
 }

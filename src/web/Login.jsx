@@ -30,7 +30,12 @@ export default function Login() {
               <p className="text-muted mb-0">Preparing login…</p>
             ) : !auth.configured ? (
               <div className="alert alert-warning mb-0" role="alert">
-                Login is not configured. Set `VITE_KEYCLOAK_URL`, `VITE_KEYCLOAK_REALM`, and `VITE_KEYCLOAK_CLIENT_ID`.
+                <div>Login is not configured.</div>
+                <div className="font-monospace small mt-1">
+                  VITE_KEYCLOAK_URL: {import.meta.env.VITE_KEYCLOAK_URL || '(not set)'}<br />
+                  VITE_KEYCLOAK_REALM: {import.meta.env.VITE_KEYCLOAK_REALM || '(not set)'}<br />
+                  VITE_KEYCLOAK_CLIENT_ID: {import.meta.env.VITE_KEYCLOAK_CLIENT_ID || '(not set)'}
+                </div>
               </div>
             ) : (
               <>

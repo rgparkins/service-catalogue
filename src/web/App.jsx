@@ -18,6 +18,7 @@ import RegisterTenant from './RegisterTenant.jsx';
 import TenantRulesets from './TenantRulesets.jsx';
 import RegisterComplete from './RegisterComplete.jsx';
 import InviteComplete from './InviteComplete.jsx';
+import TokenDebug from './TokenDebug.jsx';
 
 function AccessDenied({ tenantId }) {
   const auth = useAuth();
@@ -57,6 +58,10 @@ export default function App() {
   if (path === '/invite/complete') return <InviteComplete />;
   if (path === '/login') return <Login />;
   if (path === '/auth/callback') return <AuthCallback />;
+  if (path === '/token') {
+    if (!auth.ready) return null;
+    return <TokenDebug />;
+  }
   if (path === '/invites') {
     if (!auth.ready) return null;
     if (!auth.authenticated) {
